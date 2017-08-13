@@ -14,7 +14,7 @@ Goals for this project:
 No. It's barely tested at the time of writing.
 
 ## Testing
-Querying the server has only been tested using qstat and manually querying the server with Python.
+Querying the server has only been tested using [QStat](https://github.com/multiplay/qstat) and manually querying the server with Python.
 
 Quake 2 server code used: [Yamagi Quake II](https://github.com/yquake2/yquake2) release 7.01 
 
