@@ -16,7 +16,9 @@ No. It's barely tested at the time of writing.
 ## Testing
 Querying the server has only been tested using qstat and manually querying the server with Python.
 
-Quake 2 server code used: [yquake2](https://github.com/yquake2/yquake2) build 7.01 
+Quake 2 server code used: [Yamagi Quake II](https://github.com/yquake2/yquake2) release 7.01 
+
+Built and tested using Python 3.6
 
 ## Specs
 Specs were cobbled together using the [QStat](https://github.com/multiplay/qstat) source, [Quake 2](https://github.com/id-Software/Quake-2) source and tcpdump.
