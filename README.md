@@ -1,4 +1,4 @@
-# Quake 2 Master
+# Quake 2 master server
 
 This project originally started as a desire to aggregate the server lists for the various Quake 2 master servers.
 
@@ -21,4 +21,4 @@ Quake 2 server code used: [Yamagi Quake II](https://github.com/yquake2/yquake2) 
 Built and tested using Python 3.6
 
 ## Specs
-Specs were cobbled together using the [QStat](https://github.com/multiplay/qstat) source, [Quake 2](https://github.com/id-Software/Quake-2) source and tcpdump.
+Specs were cobbled together using the [QStat](https://github.com/multiplay/qstat) source, [Quake 2](https://github.com/id-Software/Quake-2) source, and tcpdump.
