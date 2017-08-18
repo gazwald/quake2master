@@ -5,7 +5,7 @@ from sqlalchemy import (Column,
                         Integer,
                         String,
                         Boolean,
-                        Date)
+                        DateTime)
 from sqlalchemy import (create_engine,
                         func)
 from sqlalchemy.ext.declarative import declarative_base
@@ -53,8 +53,8 @@ class Server(Base):
     fraglimit = Column(SmallInteger, nullable=False)
     protocol = Column(SmallInteger, nullable=False)
     dmflags = Column(SmallInteger, nullable=False)
-    first_seen = Column(Date, server_default=func.now())
-    last_seen = Column(Date, server_default=func.now(), onupdate=func.now())
+    first_seen = Column(DateTime, server_default=func.now())
+    last_seen = Column(DateTime, server_default=func.now(), onupdate=func.now())
     mapname_id = Column(Integer, ForeignKey('mapname.id'))
     mapname = relationship(Mapname)
     gamename_id = Column(Integer, ForeignKey('gamename.id'))
