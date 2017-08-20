@@ -103,3 +103,6 @@ ENV/
 # Sqlite
 *.db
 *.sqlite
+
+# VIM swap files
+*.swp
