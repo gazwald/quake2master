@@ -26,12 +26,13 @@ class MasterServer:
         version = get_or_create(s, Version, name=data.get('version'))
         mapname = get_or_create(s, Mapname, name=data.get('mapname'))
         gamename = get_or_create(s, Gamename, name=data.get('gamename'))
+        game = get_or_create(s, Game, name='q2')
         server = s.query(Server).filter_by(
             ip=address[0],
             port=address[1]
         ).first()
         if server:
-            print("Updating DB")
+            print(f"Heartbeat from {address[0]}:{address[1]} - updating DB")
             server.hostname = data.get('hostname')
             server.cheats = int(data.get('cheats'))
             server.needpass = int(data.get('needpass'))
@@ -45,9 +46,9 @@ class MasterServer:
             server.version = version
             server.mapname = mapname
             server.gamename = gamename
-            server.game = q2game
+            server.game = game
         else:
-            print("Inserting DB")
+            print(f"Heartbeat from {address[0]}:{address[1]} - adding to DB")
             server = Server(
                 hostname=data.get('hostname'),
                 ip=address[0],
@@ -64,7 +65,7 @@ class MasterServer:
                 version=version,
                 mapname=mapname,
                 gamename=gamename,
-                game=q2game,
+                game=game,
             )
             s.add(server)
         s.commit()
@@ -97,27 +98,34 @@ class MasterServer:
         self.update_server_in_db(address, self.dictify())
 
     def process_shutdown(self, address):
-        """
-        Is this the required behaviour?
-        """
-        print(f"Shutdown from {address}")
+        print(f"Shutdown from {address[0]}:{address[1]}")
         s = Session()
-        s.query(Server).filter_by(ip=address[0], port=address[1]).delete()
+        server = s.query(Server).filter_by(ip=address[0],
+                                           port=address[1]).first()
+        server.active = False
         s.commit()
         s.close()
 
     def process_ping(self, address):
-        print(f"Sending ack to {address}")
+        print(f"Sending ack to {address[0]}:{address[1]}")
+        s = Session()
+        server = s.query(Server).filter_by(ip=address[0],
+                                           port=address[1]).first()
+        server.active = True
+        s.commit()
+        s.close()
         self.transport.sendto(self.header_ack, address)
 
     def process_query(self, destination):
-        print(f"Sending servers to {destination}")
+        print(f"Sending servers to {destination[0]}:{destination[1]}")
         serverstring = [self.header_servers]
+        s = Session()
         for server in s.query(Server).with_entities(Server.ip, Server.port):
             ip = int(ipaddress.IPv4Address(server[0]))
             address = struct.pack('!LH', int(ip), server[1])
             serverstring.append(address)
 
+        s.close()
         self.transport.sendto(b''.join(serverstring), destination)
 
     def datagram_received(self, data, address):
@@ -141,13 +149,6 @@ class MasterServer:
 if __name__ == '__main__':
     engine = create_engine('sqlite:///q2master.sqlite')
     Session = sessionmaker(bind=engine)
-
-    """
-    Grab the game type(s) once at the start
-    """
-    s = Session()
-    q2game = get_or_create(s, Game, name='q2')
-    s.close()
 
     """
     asyncio magic
