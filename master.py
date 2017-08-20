@@ -2,6 +2,7 @@
 import asyncio
 import ipaddress
 import struct
+from datetime import datetime
 
 from schema import Game, Version, Mapname, Gamename, Server
 from schema.functions import get_or_create
@@ -32,7 +33,7 @@ class MasterServer:
             port=address[1]
         ).first()
         if server:
-            print(f"Heartbeat from {address[0]}:{address[1]} - updating DB")
+            print(f"{datetime.utcnow().isoformat()}: Heartbeat from {address[0]}:{address[1]} - updating DB")
             server.hostname = data.get('hostname')
             server.cheats = int(data.get('cheats'))
             server.needpass = int(data.get('needpass'))
@@ -48,7 +49,7 @@ class MasterServer:
             server.gamename = gamename
             server.game = game
         else:
-            print(f"Heartbeat from {address[0]}:{address[1]} - adding to DB")
+            print(f"{datetime.utcnow().isoformat()}: Heartbeat from {address[0]}:{address[1]} - adding to DB")
             server = Server(
                 hostname=data.get('hostname'),
                 ip=address[0],
@@ -98,29 +99,32 @@ class MasterServer:
         self.update_server_in_db(address, self.dictify())
 
     def process_shutdown(self, address):
-        print(f"Shutdown from {address[0]}:{address[1]}")
+        print(f"{datetime.utcnow().isoformat()}: Shutdown from {address[0]}:{address[1]}")
         s = Session()
         server = s.query(Server).filter_by(ip=address[0],
                                            port=address[1]).first()
-        server.active = False
-        s.commit()
+        if server:
+            server.active = False
+            s.commit()
         s.close()
 
     def process_ping(self, address):
-        print(f"Sending ack to {address[0]}:{address[1]}")
+        print(f"{datetime.utcnow().isoformat()}: Sending ack to {address[0]}:{address[1]}")
         s = Session()
         server = s.query(Server).filter_by(ip=address[0],
                                            port=address[1]).first()
-        server.active = True
-        s.commit()
+        if server:
+            server.active = True
+            s.commit()
         s.close()
         self.transport.sendto(self.header_ack, address)
 
     def process_query(self, destination):
-        print(f"Sending servers to {destination[0]}:{destination[1]}")
+        print(f"{datetime.utcnow().isoformat()}: Sending servers to {destination[0]}:{destination[1]}")
         serverstring = [self.header_servers]
         s = Session()
-        for server in s.query(Server).with_entities(Server.ip, Server.port):
+        for server in s.query(Server).filter(Server.active)\
+                                     .with_entities(Server.ip, Server.port):
             ip = int(ipaddress.IPv4Address(server[0]))
             address = struct.pack('!LH', int(ip), server[1])
             serverstring.append(address)
@@ -155,7 +159,7 @@ if __name__ == '__main__':
     """
     LOCAL = ('0.0.0.0', 27900)
     loop = asyncio.get_event_loop()
-    print("Starting Quake 2 master server")
+    print(f"{datetime.utcnow().isoformat()}: Starting Quake 2 master server on {LOCAL[0]}:{LOCAL[1]}")
     listen = loop.create_datagram_endpoint(MasterServer, local_addr=LOCAL)
     transport, protocol = loop.run_until_complete(listen)
 
@@ -164,5 +168,6 @@ if __name__ == '__main__':
     except KeyboardInterrupt:
         pass
 
+    print(f"{datetime.utcnow().isoformat()}: Shutting down Quake 2 master server")
     transport.close()
     loop.close()
