@@ -6,6 +6,7 @@ from sqlalchemy import (Column,
                         String,
                         Boolean,
                         DateTime)
+from sqlalchemy.dialects import postgresql
 from sqlalchemy import (create_engine,
                         func)
 from sqlalchemy.ext.declarative import declarative_base
@@ -17,71 +18,88 @@ Base = declarative_base()
 class Version(Base):
     __tablename__ = 'version'
     id = Column(Integer, primary_key=True)
-    name = Column(String(250), nullable=False)
-
-    def __repr__(self):
-        return self.name
-
-
-class Mapname(Base):
-    __tablename__ = 'mapname'
-    id = Column(Integer, primary_key=True)
-    name = Column(String(250), nullable=False)
-
-    def __repr__(self):
-        return self.name
+    name = Column(String(250), index=True, unique=True)
 
 
 class Game(Base):
     __tablename__ = 'game'
     id = Column(Integer, primary_key=True)
-    name = Column(String(250), nullable=False)
-
-    def __repr__(self):
-        return self.name
+    name = Column(String(250), index=True, unique=True)
 
 
-class Gamename(Base):
-    __tablename__ = 'gamename'
+class Map(Base):
+    __tablename__ = 'map'
     id = Column(Integer, primary_key=True)
-    name = Column(String(250), nullable=False)
+    name = Column(String(250), index=True, unique=True)
 
-    def __repr__(self):
-        return self.name
+
+class Country(Base):
+    __tablename__ = 'country'
+    id = Column(Integer, primary_key=True)
+    name_short = Column(String(2), index=True, unique=True)
+    name_long = Column(String(50), index=True, unique=True)
 
 
 class Server(Base):
     __tablename__ = 'server'
     id = Column(Integer, primary_key=True)
-    hostname = Column(String(250), nullable=False)
-    ip = Column(String(15), nullable=False)
-    port = Column(SmallInteger, nullable=False)
-    cheats = Column(SmallInteger, nullable=False)
-    needpass = Column(SmallInteger, nullable=False)
-    deathmatch = Column(SmallInteger, nullable=False)
-    maxclients = Column(SmallInteger, nullable=False)
-    maxspectators = Column(SmallInteger, nullable=False)
-    timelimit = Column(SmallInteger, nullable=False)
-    fraglimit = Column(SmallInteger, nullable=False)
-    protocol = Column(SmallInteger, nullable=False)
-    dmflags = Column(SmallInteger, nullable=False)
-    first_seen = Column(DateTime, server_default=func.now())
+    ip = Column(postgresql.INET, index=True, nullable=False)
+    port = Column(SmallInteger, index=True, nullable=False)
+    active = Column(Boolean)
+    first_seen = Column(DateTime,
+                        server_default=func.now())
     last_seen = Column(DateTime,
                        server_default=func.now(),
                        onupdate=func.now())
-    active = Column(Boolean)
-    mapname_id = Column(Integer, ForeignKey('mapname.id'))
-    mapname = relationship(Mapname, lazy='joined')
-    gamename_id = Column(Integer, ForeignKey('gamename.id'))
-    gamename = relationship(Gamename, lazy='joined')
-    version_id = Column(Integer, ForeignKey('version.id'))
-    version = relationship(Version, lazy='joined')
+
+    country_id = Column(Integer, ForeignKey('country.id'))
+    country = relationship(Country, lazy='joined')
+
     game_id = Column(Integer, ForeignKey('game.id'))
     game = relationship(Game, lazy='joined')
+
+
+class Status(Base):
+    __tablename__ = 'status'
+    id = Column(Integer, primary_key=True)
+    hostname = Column(String(250))
+    cheats = Column(SmallInteger)
+    needpass = Column(SmallInteger)
+    deathmatch = Column(SmallInteger)
+    clients = Column(SmallInteger)
+    maxclients = Column(SmallInteger)
+    spectators = Column(SmallInteger)
+    maxspectators = Column(SmallInteger)
+    timelimit = Column(SmallInteger)
+    fraglimit = Column(SmallInteger)
+    protocol = Column(SmallInteger)
+    dmflags = Column(Integer)
+    uptime = Column(String(50))
+
+    server_id = Column(Integer, ForeignKey('server.id'))
+    server = relationship(Server, lazy='joined')
+
+    map_id = Column(Integer, ForeignKey('map.id'))
+    map = relationship(Map, lazy='joined')
+
+    version_id = Column(Integer, ForeignKey('version.id'))
+    version = relationship(Version, lazy='joined')
+
+
+class Player(Base):
+    __tablename__ = 'player'
+    id = Column(Integer, primary_key=True)
+    name = Column(String(250))
+    score = Column(SmallInteger)
+    ping = Column(SmallInteger)
+
+    server_id = Column(Integer, ForeignKey('server.id'))
+    server = relationship(Server, lazy='joined')
 
 
 """
 TODO: Move DB creation into 'functions.py'
 """
-engine = create_engine('sqlite:///q2master.sqlite')
+connectionstr = 'postgresql://q2master:password@192.168.124.86:5432/q2master'
+engine = create_engine(connectionstr)
 Base.metadata.create_all(engine)

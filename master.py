@@ -4,7 +4,7 @@ import ipaddress
 import struct
 from datetime import datetime
 
-from schema import Game, Version, Mapname, Gamename, Server
+from schema import Game, Server
 from schema.functions import get_or_create
 
 from sqlalchemy import create_engine
@@ -22,81 +22,24 @@ class MasterServer:
     def decoder(self, code):
         return code.decode('ascii')
 
-    def update_server_in_db(self, address, data):
+    def process_heartbeat(self, address):
+        print(f"{datetime.utcnow().isoformat()}: Heartbeat from {address[0]}:{address[1]}")
         s = Session()
-        version = get_or_create(s, Version, name=data.get('version'))
-        mapname = get_or_create(s, Mapname, name=data.get('mapname'))
-        gamename = get_or_create(s, Gamename, name=data.get('gamename'))
         game = get_or_create(s, Game, name='q2')
         server = s.query(Server).filter_by(
             ip=address[0],
             port=address[1]
         ).first()
-        if server:
-            print(f"{datetime.utcnow().isoformat()}: Heartbeat from {address[0]}:{address[1]} - updating DB")
-            server.hostname = data.get('hostname')
-            server.cheats = int(data.get('cheats'))
-            server.needpass = int(data.get('needpass'))
-            server.deathmatch = int(data.get('deathmatch'))
-            server.maxclients = int(data.get('maxclients'))
-            server.maxspectators = int(data.get('maxspectators'))
-            server.timelimit = int(data.get('timelimit'))
-            server.fraglimit = int(data.get('fraglimit'))
-            server.protocol = int(data.get('protocol'))
-            server.dmflags = int(data.get('dmflags'))
-            server.version = version
-            server.mapname = mapname
-            server.gamename = gamename
-            server.game = game
-        else:
-            print(f"{datetime.utcnow().isoformat()}: Heartbeat from {address[0]}:{address[1]} - adding to DB")
+        if not server:
             server = Server(
-                hostname=data.get('hostname'),
+                active=True,
                 ip=address[0],
                 port=address[1],
-                cheats=int(data.get('cheats')),
-                needpass=int(data.get('needpass')),
-                deathmatch=int(data.get('deathmatch')),
-                maxclients=int(data.get('maxclients')),
-                maxspectators=int(data.get('maxspectators')),
-                timelimit=int(data.get('timelimit')),
-                fraglimit=int(data.get('fraglimit')),
-                protocol=int(data.get('protocol')),
-                dmflags=int(data.get('dmflags')),
-                version=version,
-                mapname=mapname,
-                gamename=gamename,
                 game=game,
             )
             s.add(server)
-        s.commit()
+            s.commit()
         s.close()
-
-    def dictify(self):
-        """
-        Byte string -> Byte list -> Byte Tuple list -> Dict String
-        TODO: This should really be cleaned up...
-              and there's a mistake in one of the examples
-
-        Example input:
-        \\cheats\\0\\dmflags\\16\\\0
-        Example output:
-        [b'cheats', b'0', b'dmflags', b'16']
-        """
-        bytes_command = self.message[1].split(b'\\')[1:]
-        """
-        Example output:
-        [(b'cheats', b'0'), (b'dmflags', b'16')]
-        """
-        zipped = zip(bytes_command[0::2], bytes_command[1::2])
-        """
-        Example output:
-        {'cheats': '0', 'dmflags': '16'}
-        """
-        return dict((self.decoder(x), self.decoder(y)) for x, y in zipped)
-
-    def process_heartbeat(self, address):
-        self.update_server_in_db(address, self.dictify())
 
     def process_shutdown(self, address):
         print(f"{datetime.utcnow().isoformat()}: Shutdown from {address[0]}:{address[1]}")
@@ -151,7 +94,7 @@ class MasterServer:
 
 
 if __name__ == '__main__':
-    engine = create_engine('sqlite:///q2master.sqlite')
+    engine = create_engine('postgresql://q2master:password@192.168.124.86:5432/q2master')
     Session = sessionmaker(bind=engine)
 
     """
