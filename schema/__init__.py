@@ -20,11 +20,17 @@ class Version(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String(250), index=True, unique=True)
 
+    def __repr__(self):
+        return self.name
+
 
 class Game(Base):
     __tablename__ = 'game'
     id = Column(Integer, primary_key=True)
     name = Column(String(250), index=True, unique=True)
+
+    def __repr__(self):
+        return self.name
 
 
 class Map(Base):
@@ -32,12 +38,18 @@ class Map(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String(250), index=True, unique=True)
 
+    def __repr__(self):
+        return self.name
+
 
 class Country(Base):
     __tablename__ = 'country'
     id = Column(Integer, primary_key=True)
     name_short = Column(String(2), index=True, unique=True)
     name_long = Column(String(50), index=True, unique=True)
+
+    def __repr__(self):
+        return self.name_long
 
 
 class Server(Base):
@@ -57,6 +69,9 @@ class Server(Base):
 
     game_id = Column(Integer, ForeignKey('game.id'))
     game = relationship(Game, lazy='joined')
+
+    def __repr__(self):
+        return '<%s %s>' % (self.ip, self.port)
 
 
 class Status(Base):
@@ -85,6 +100,9 @@ class Status(Base):
     version_id = Column(Integer, ForeignKey('version.id'))
     version = relationship(Version, lazy='joined')
 
+    def __repr__(self):
+        return self.hostname
+
 
 class Player(Base):
     __tablename__ = 'player'
@@ -95,6 +113,9 @@ class Player(Base):
 
     server_id = Column(Integer, ForeignKey('server.id'))
     server = relationship(Server, lazy='joined')
+
+    def __repr__(self):
+        return self.name
 
 
 """
