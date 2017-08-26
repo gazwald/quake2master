@@ -33,6 +33,15 @@ class Game(Base):
         return self.name
 
 
+class Gamename(Base):
+    __tablename__ = 'gamename'
+    id = Column(Integer, primary_key=True)
+    name = Column(String(250), index=True, unique=True)
+
+    def __repr__(self):
+        return self.name
+
+
 class Map(Base):
     __tablename__ = 'map'
     id = Column(Integer, primary_key=True)
@@ -81,9 +90,8 @@ class Status(Base):
     cheats = Column(SmallInteger)
     needpass = Column(SmallInteger)
     deathmatch = Column(SmallInteger)
-    clients = Column(SmallInteger)
+    clients = Column(SmallInteger, default=0)
     maxclients = Column(SmallInteger)
-    spectators = Column(SmallInteger)
     maxspectators = Column(SmallInteger)
     timelimit = Column(SmallInteger)
     fraglimit = Column(SmallInteger)
@@ -91,7 +99,7 @@ class Status(Base):
     dmflags = Column(Integer)
     uptime = Column(String(50))
 
-    server_id = Column(Integer, ForeignKey('server.id'))
+    server_id = Column(Integer, ForeignKey('server.id'), nullable=False)
     server = relationship(Server, lazy='joined')
 
     map_id = Column(Integer, ForeignKey('map.id'))
@@ -99,6 +107,9 @@ class Status(Base):
 
     version_id = Column(Integer, ForeignKey('version.id'))
     version = relationship(Version, lazy='joined')
+
+    gamename_id = Column(Integer, ForeignKey('gamename.id'))
+    gamename = relationship(Gamename, lazy='joined')
 
     def __repr__(self):
         return self.hostname
@@ -111,7 +122,7 @@ class Player(Base):
     score = Column(SmallInteger)
     ping = Column(SmallInteger)
 
-    server_id = Column(Integer, ForeignKey('server.id'))
+    server_id = Column(Integer, ForeignKey('server.id'), nullable=False)
     server = relationship(Server, lazy='joined')
 
     def __repr__(self):
