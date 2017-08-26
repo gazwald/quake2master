@@ -2,6 +2,7 @@
 import asyncio
 import ipaddress
 import struct
+import configparser
 from datetime import datetime
 
 from schema import Game, Server
@@ -16,14 +17,15 @@ class MasterServer:
     header_ack = b''.join([header, b'ack'])
     header_servers = b''.join([header, b'servers '])
 
+    @staticmethod
+    def console_output(message):
+        print(f"{datetime.utcnow().isoformat()}: {message}")
+
     def connection_made(self, transport):
         self.transport = transport
 
-    def decoder(self, code):
-        return code.decode('ascii')
-
     def process_heartbeat(self, address):
-        print(f"{datetime.utcnow().isoformat()}: Heartbeat from {address[0]}:{address[1]}")
+        self.console_output(f"Heartbeat from {address[0]}:{address[1]}")
         s = Session()
         game = get_or_create(s, Game, name='q2')
         server = s.query(Server).filter_by(
@@ -42,7 +44,7 @@ class MasterServer:
         s.close()
 
     def process_shutdown(self, address):
-        print(f"{datetime.utcnow().isoformat()}: Shutdown from {address[0]}:{address[1]}")
+        self.console_output(f"Shutdown from {address[0]}:{address[1]}")
         s = Session()
         server = s.query(Server).filter_by(ip=address[0],
                                            port=address[1]).first()
@@ -52,7 +54,7 @@ class MasterServer:
         s.close()
 
     def process_ping(self, address):
-        print(f"{datetime.utcnow().isoformat()}: Sending ack to {address[0]}:{address[1]}")
+        self.console_output(f"Sending ack to {address[0]}:{address[1]}")
         s = Session()
         server = s.query(Server).filter_by(ip=address[0],
                                            port=address[1]).first()
@@ -63,7 +65,7 @@ class MasterServer:
         self.transport.sendto(self.header_ack, address)
 
     def process_query(self, destination):
-        print(f"{datetime.utcnow().isoformat()}: Sending servers to {destination[0]}:{destination[1]}")
+        self.console_output(f"Sending servers to {destination[0]}:{destination[1]}")
         serverstring = [self.header_servers]
         s = Session()
         for server in s.query(Server).filter(Server.active)\
@@ -94,7 +96,14 @@ class MasterServer:
 
 
 if __name__ == '__main__':
-    engine = create_engine('postgresql://q2master:password@192.168.124.86:5432/q2master')
+    config = configparser.ConfigParser()
+    config.read('config.ini')
+    dbstring = 'postgresql://{username}:{password}@{host}:{port}/{database}'
+    engine = create_engine(dbstring.format(username=config['database']['username'],
+                                           password=config['database']['password'],
+                                           host=config['database']['host'],
+                                           port=config['database']['port'],
+                                           database=config['database']['database']))
     Session = sessionmaker(bind=engine)
 
     """
@@ -102,7 +111,7 @@ if __name__ == '__main__':
     """
     LOCAL = ('0.0.0.0', 27900)
     loop = asyncio.get_event_loop()
-    print(f"{datetime.utcnow().isoformat()}: Starting Quake 2 master server on {LOCAL[0]}:{LOCAL[1]}")
+    MasterServer.console_output(f"Starting Quake 2 master server on {LOCAL[0]}:{LOCAL[1]}")
     listen = loop.create_datagram_endpoint(MasterServer, local_addr=LOCAL)
     transport, protocol = loop.run_until_complete(listen)
 
@@ -111,6 +120,6 @@ if __name__ == '__main__':
     except KeyboardInterrupt:
         pass
 
-    print(f"{datetime.utcnow().isoformat()}: Shutting down Quake 2 master server")
+    MasterServer.console_output(f"Shutting down Quake 2 master server")
     transport.close()
     loop.close()
