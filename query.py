@@ -6,7 +6,7 @@ import re
 from schema import Server, Status, Map, Version, Gamename, Player
 from schema.functions import get_or_create
 
-from sqlalchemy import create_engine, and_
+from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 
@@ -22,7 +22,7 @@ Session = sessionmaker(bind=engine)
 db = Session()
 
 str_fmt = '%Y-%m-%d %H:%M'
-player_regex = re.compile('(?P<score>\d+) (?P<ping>\d+) (?P<name>".+")', flags=re.ASCII)
+player_regex = re.compile('(?P<score>-?\d+) (?P<ping>\d+) (?P<name>".+")', flags=re.ASCII)
 
 q2header = b'\xff\xff\xff\xff'
 q2servers = q2header + b'status 23\x0a'
@@ -91,28 +91,19 @@ def update_status(server, serverstatus):
 
 
 def update_players(server, players):
-    """
-    TODO: Remove players that no longer exist on the server
-    TODO: Deal with duplicates
-    """
+    db.query(Player).filter(Player.server == server).delete()
+    db.commit()
     for playerstate in players:
-        playerstate = playerstate.decode('ascii')
         if playerstate:
+            playerstate = playerstate.decode('ascii')
             playerstate = re.match(player_regex, playerstate)
-            player = db.query(Player).join(Player.server)\
-                                     .filter(and_(Player.server == server,
-                                                  Player.name == playerstate.group('name'))).first()
-            if player:
-                player.score = int(playerstate.group('score'))
-                player.ping = int(playerstate.group('ping'))
-            else:
-                player = Player(
-                    score=int(playerstate.group('score')),
-                    ping=int(playerstate.group('ping')),
-                    name=playerstate.group('name'),
-                    server=server
-                )
-                db.add(player)
+            player = Player(
+                score=int(playerstate.group('score')),
+                ping=int(playerstate.group('ping')),
+                name=playerstate.group('name'),
+                server=server
+            )
+            db.add(player)
             db.commit()
 
 
@@ -121,6 +112,7 @@ def process_server_info(server, message):
         status = message[1]
         players = message[2:]
         if players:
+            print(players)
             update_players(server, players)
         if status:
             update_status(server, dictify(status))
