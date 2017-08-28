@@ -14,10 +14,10 @@ from sqlalchemy.orm import sessionmaker
 
 class MasterServer:
     def __init__(self):
-        self.db = create_db_connection()
+        self.db = self.create_db_connection()
         self.header = b'\xff\xff\xff\xff'
-        self.header_ack = b''.join([header, b'ack'])
-        self.header_servers = b''.join([header, b'servers '])
+        self.header_ack = b''.join([self.header, b'ack'])
+        self.header_servers = b''.join([self.header, b'servers '])
 
     @staticmethod
     def console_output(message):
@@ -46,8 +46,7 @@ class MasterServer:
         ip = ipaddress.IPv4Address(data[0])
         return struct.pack('!LH', int(ip), data[1])
 
-    @staticmethod
-    def fetch_servers():
+    def fetch_servers(self):
         serverstring = [self.header_servers]
         for server in self.db.query(Server)\
                              .filter(Server.active)\
@@ -62,14 +61,13 @@ class MasterServer:
                       .filter_by(ip=address[0],
                                  port=address[1]).first()
 
-
     def connection_made(self, transport):
         self.transport = transport
 
     def process_heartbeat(self, address, name):
         self.console_output(f"Heartbeat from {address[0]}:{address[1]}")
         self.game = get_or_create(self.db, Game, name=name)
-        server = get_server(address)
+        server = self.get_server(address)
         if not server:
             server = Server(
                 active=True,
@@ -82,14 +80,14 @@ class MasterServer:
 
     def process_shutdown(self, address):
         self.console_output(f"Shutdown from {address[0]}:{address[1]}")
-        server = get_server(address)
+        server = self.get_server(address)
         if server:
             server.active = False
             self.db.commit()
 
     def process_ping(self, address):
         self.console_output(f"Sending ack to {address[0]}:{address[1]}")
-        server = get_server(address)
+        server = self.get_server(address)
         if server:
             server.active = True
             self.db.commit()
@@ -97,7 +95,7 @@ class MasterServer:
 
     def process_query(self, destination):
         self.console_output(f"Sending servers to {destination[0]}:{destination[1]}")
-        servers = fetch_servers()
+        servers = self.fetch_servers()
         self.transport.sendto(servers, destination)
 
     def datagram_received(self, data, address):
