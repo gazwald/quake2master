@@ -22,6 +22,19 @@ class MasterServer:
         print(f"{datetime.utcnow().isoformat()}: {message}")
 
     @staticmethod
+    def create_db_connection():
+        config = configparser.ConfigParser()
+        config.read('config.ini')
+        dbstring = 'postgresql://{username}:{password}@{host}:{port}/{database}'
+        engine = create_engine(dbstring.format(username=config['database']['username'],
+                                               password=config['database']['password'],
+                                               host=config['database']['host'],
+                                               port=config['database']['port'],
+                                               database=config['database']['database']))
+        Session = sessionmaker(bind=engine)
+        return Session()
+
+    @staticmethod
     def bytepack(data):
         """
         Pack an IP (4 bytes) and Port (2 bytes) together
@@ -38,7 +51,6 @@ class MasterServer:
                                      .with_entities(Server.ip,
                                                     Server.port).all():
             serverstring.append(self.bytepack(server))
-
 
         return b''.join(serverstring)
 
@@ -85,7 +97,8 @@ class MasterServer:
         self.transport.sendto(servers, destination)
 
     def datagram_received(self, data, address):
-        self.db = Session()
+        self.db = create_db_connection()
+
         self.message = data.split(b'\n')
 
         if self.message[0].startswith(self.header):
@@ -107,16 +120,6 @@ class MasterServer:
 
 
 if __name__ == '__main__':
-    config = configparser.ConfigParser()
-    config.read('config.ini')
-    dbstring = 'postgresql://{username}:{password}@{host}:{port}/{database}'
-    engine = create_engine(dbstring.format(username=config['database']['username'],
-                                           password=config['database']['password'],
-                                           host=config['database']['host'],
-                                           port=config['database']['port'],
-                                           database=config['database']['database']))
-    Session = sessionmaker(bind=engine)
-
     """
     asyncio magic
     """
