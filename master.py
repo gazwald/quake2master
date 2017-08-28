@@ -21,14 +21,34 @@ class MasterServer:
     def console_output(message):
         print(f"{datetime.utcnow().isoformat()}: {message}")
 
+    @staticmethod
+    def bytepack(data):
+        """
+        Pack an IP (4 bytes) and Port (2 bytes) together
+        IP addresses are stored as INET in Postgres
+        Ports are stored as Integers in Postgres
+        """
+        ip = ipaddress.IPv4Address(data[0])
+        return struct.pack('!LH', int(ip), data[1])
+
+    @staticmethod
+    def fetch_servers():
+        serverstring = [self.header_servers]
+        for server in self.db.query(Server).filter(Server.active)\
+                                     .with_entities(Server.ip,
+                                                    Server.port).all():
+            serverstring.append(self.bytepack(server))
+
+
+        return b''.join(serverstring)
+
     def connection_made(self, transport):
         self.transport = transport
 
-    def process_heartbeat(self, address):
+    def process_heartbeat(self, address, name):
         self.console_output(f"Heartbeat from {address[0]}:{address[1]}")
-        s = Session()
-        game = get_or_create(s, Game, name='q2')
-        server = s.query(Server).filter_by(
+        self.game = get_or_create(self.db, Game, name=name)
+        server = self.db.query(Server).filter_by(
             ip=address[0],
             port=address[1]
         ).first()
@@ -37,52 +57,41 @@ class MasterServer:
                 active=True,
                 ip=address[0],
                 port=address[1],
-                game=game,
+                game=self.game,
             )
-            s.add(server)
-            s.commit()
-        s.close()
+            self.db.add(server)
+            self.db.commit()
 
     def process_shutdown(self, address):
         self.console_output(f"Shutdown from {address[0]}:{address[1]}")
-        s = Session()
-        server = s.query(Server).filter_by(ip=address[0],
+        server = self.db.query(Server).filter_by(ip=address[0],
                                            port=address[1]).first()
         if server:
             server.active = False
-            s.commit()
-        s.close()
+            self.db.commit()
 
     def process_ping(self, address):
         self.console_output(f"Sending ack to {address[0]}:{address[1]}")
-        s = Session()
-        server = s.query(Server).filter_by(ip=address[0],
+        server = self.db.query(Server).filter_by(ip=address[0],
                                            port=address[1]).first()
         if server:
             server.active = True
-            s.commit()
-        s.close()
+            self.db.commit()
         self.transport.sendto(self.header_ack, address)
 
     def process_query(self, destination):
         self.console_output(f"Sending servers to {destination[0]}:{destination[1]}")
-        serverstring = [self.header_servers]
-        s = Session()
-        for server in s.query(Server).filter(Server.active)\
-                                     .with_entities(Server.ip, Server.port):
-            ip = int(ipaddress.IPv4Address(server[0]))
-            address = struct.pack('!LH', int(ip), server[1])
-            serverstring.append(address)
-
-        s.close()
-        self.transport.sendto(b''.join(serverstring), destination)
+        servers = fetch_servers()
+        self.transport.sendto(servers, destination)
 
     def datagram_received(self, data, address):
+        self.db = Session()
         self.message = data.split(b'\n')
+
         if self.message[0].startswith(self.header):
             command = self.message[0][4:]
             if command.startswith(b"heartbeat"):
-                self.process_heartbeat(address)
+                self.process_heartbeat(address, 'q2')
             elif command.startswith(b"shutdown"):
                 self.process_shutdown(address)
             elif command.startswith(b"ping"):
@@ -93,6 +102,8 @@ class MasterServer:
             self.process_query(address)
         else:
             print(f"Unknown command: {command}")
+
+        self.db.close()
 
 
 if __name__ == '__main__':
