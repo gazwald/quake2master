@@ -13,9 +13,11 @@ from sqlalchemy.orm import sessionmaker
 
 
 class MasterServer:
-    header = b'\xff\xff\xff\xff'
-    header_ack = b''.join([header, b'ack'])
-    header_servers = b''.join([header, b'servers '])
+    def __init__(self):
+        self.db = create_db_connection()
+        self.header = b'\xff\xff\xff\xff'
+        self.header_ack = b''.join([header, b'ack'])
+        self.header_servers = b''.join([header, b'servers '])
 
     @staticmethod
     def console_output(message):
@@ -99,10 +101,7 @@ class MasterServer:
         self.transport.sendto(servers, destination)
 
     def datagram_received(self, data, address):
-        self.db = create_db_connection()
-
         self.message = data.split(b'\n')
-
         if self.message[0].startswith(self.header):
             command = self.message[0][4:]
             if command.startswith(b"heartbeat"):
