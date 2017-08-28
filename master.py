@@ -47,12 +47,19 @@ class MasterServer:
     @staticmethod
     def fetch_servers():
         serverstring = [self.header_servers]
-        for server in self.db.query(Server).filter(Server.active)\
-                                     .with_entities(Server.ip,
-                                                    Server.port).all():
+        for server in self.db.query(Server)\
+                             .filter(Server.active)\
+                             .with_entities(Server.ip,
+                                            Server.port).all():
             serverstring.append(self.bytepack(server))
 
         return b''.join(serverstring)
+
+    def get_server(self, address):
+        return self.db.query(Server)\
+                      .filter_by(ip=address[0],
+                                 port=address[1]).first()
+
 
     def connection_made(self, transport):
         self.transport = transport
@@ -60,10 +67,7 @@ class MasterServer:
     def process_heartbeat(self, address, name):
         self.console_output(f"Heartbeat from {address[0]}:{address[1]}")
         self.game = get_or_create(self.db, Game, name=name)
-        server = self.db.query(Server).filter_by(
-            ip=address[0],
-            port=address[1]
-        ).first()
+        server = get_server(address)
         if not server:
             server = Server(
                 active=True,
@@ -76,16 +80,14 @@ class MasterServer:
 
     def process_shutdown(self, address):
         self.console_output(f"Shutdown from {address[0]}:{address[1]}")
-        server = self.db.query(Server).filter_by(ip=address[0],
-                                           port=address[1]).first()
+        server = get_server(address)
         if server:
             server.active = False
             self.db.commit()
 
     def process_ping(self, address):
         self.console_output(f"Sending ack to {address[0]}:{address[1]}")
-        server = self.db.query(Server).filter_by(ip=address[0],
-                                           port=address[1]).first()
+        server = get_server(address)
         if server:
             server.active = True
             self.db.commit()
