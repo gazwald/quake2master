@@ -3,12 +3,12 @@ from sqlalchemy import (Column,
                         ForeignKey,
                         SmallInteger,
                         Integer,
+                        BigInteger,
                         String,
                         Boolean,
                         DateTime)
 from sqlalchemy.dialects import postgresql
-from sqlalchemy import (create_engine,
-                        func)
+from sqlalchemy import func
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 
@@ -80,7 +80,7 @@ class Server(Base):
     game = relationship(Game, lazy='joined')
 
     def __repr__(self):
-        return '<%s %s>' % (self.ip, self.port)
+        return '%s:%s' % (self.ip, self.port)
 
 
 class Status(Base):
@@ -117,7 +117,7 @@ class Status(Base):
 
 class Player(Base):
     __tablename__ = 'player'
-    id = Column(Integer, primary_key=True)
+    id = Column(BigInteger, primary_key=True)
     name = Column(String(250))
     score = Column(SmallInteger)
     ping = Column(SmallInteger)
@@ -127,11 +127,3 @@ class Player(Base):
 
     def __repr__(self):
         return self.name
-
-
-"""
-TODO: Move DB creation into 'functions.py'
-"""
-connectionstr = 'postgresql://q2master:password@192.168.124.86:5432/q2master'
-engine = create_engine(connectionstr)
-Base.metadata.create_all(engine)
