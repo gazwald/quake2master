@@ -2,7 +2,7 @@
 
 This project originally started as a desire to aggregate the server lists for the various Quake 2 master servers.
 
-However most Quake 2 master servers these days appear to be dead and of the one that isn't dead ([q2servers.com](http://q2servers.com/) it doesn't appear to support b'query\n\0'.
+However most Quake 2 master servers these days appear to be dead and of the one that isn't dead ([q2servers.com](http://q2servers.com/)) it doesn't appear to support b'query\n\0'.
 
 Core goals for this project:
 * Write servers to PostgreSQL backend for state management - Done
