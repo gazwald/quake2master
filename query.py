@@ -33,16 +33,16 @@ def dictify(message):
     """
     Input:
         b'\\cheats\\0\\deathmatch\\1\\dmflags\\16\\fraglimit\\0'
-    Split the above byte-string into list of byte strings resulting in:
-        [b'cheats', b'0', b'deathmatch', b'1', b'dmflags', b'16', b'fraglimit', b'0']
+    Split the above byte-string into list of strings resulting in:
+        ['cheats', '0', 'deathmatch', '1', 'dmflags', '16', 'fraglimit', '0']
     Zip the above list of byte strings and then convert zip object into a dict:
         {'cheats': '0', 'deathmatch': '1', 'dmflags': '16', 'fraglimit': '0']
-    Dict conversion also decodes from Bytes to ASCII
     TODO: Look for improvements here
     """
-    bytes_command = message.split(b'\\')[1:]
-    zipped = zip(bytes_command[0::2], bytes_command[1::2])
-    status = dict((x.decode('ascii'), y.decode('ascii')) for x, y in zipped)
+    strmessage = message.decode('ascii')
+    strstatus = strmessage.split('\\')[1:]
+    zipped = zip(strstatus[0::2], strstatus[1::2])
+    status = dict((x, y) for x, y in zipped)
     return status
 
 
@@ -51,7 +51,6 @@ def update_status(server, serverstatus):
     mapname = get_or_create(db, Map, name=serverstatus.get('mapname'))
     gamename = get_or_create(db, Gamename, name=serverstatus.get('gamename'))
     clients = db.query(Player).join(Player.server).filter(Player.server == server).count()
-    print(clients)
     status = db.query(Status).join(Status.server).filter(Status.server == server).first()
     if status:
         status.hostname = serverstatus.get('hostname')
