@@ -33,5 +33,5 @@ Built and tested using Python 3.6
 Specs were cobbled together using the following:
 * [QStat](https://github.com/multiplay/qstat)
 * [Quake 2](https://github.com/id-Software/Quake-2)
-* [This implimentation](q2.rlogin.dk/news/2016/Setting-up-your-own-Quake-2-Master-server)
+* [This implimentation](http://q2.rlogin.dk/news/2016/Setting-up-your-own-Quake-2-Master-server)
 * And good ol' tcpdump.
