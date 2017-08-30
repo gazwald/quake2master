@@ -5,8 +5,8 @@ import struct
 import configparser
 from datetime import datetime
 
-from schema import Game, Server
-from schema.functions import get_or_create
+from database.orm import Game, Server
+from database.functions import get_or_create
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker

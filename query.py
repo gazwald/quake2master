@@ -4,14 +4,14 @@ import configparser
 import re
 from datetime import datetime
 
-from schema import (Server,
-                    Status,
-                    Map,
-                    Version,
-                    Gamename,
-                    Player,
-                    State)
-from schema.functions import get_or_create
+from database.orm import (Server,
+                          Status,
+                          Map,
+                          Version,
+                          Gamename,
+                          Player,
+                          State)
+from database.functions import get_or_create
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
