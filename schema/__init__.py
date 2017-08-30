@@ -127,3 +127,11 @@ class Player(Base):
 
     def __repr__(self):
         return self.name
+
+
+class State(Base):
+    __tablename__ = 'query'
+    id = Column(Integer, primary_key=True)
+    running = Column(Boolean)
+    started = Column(DateTime)
+    ended = Column(DateTime)

@@ -2,8 +2,15 @@
 import socket
 import configparser
 import re
+from datetime import datetime
 
-from schema import Server, Status, Map, Version, Gamename, Player
+from schema import (Server,
+                    Status,
+                    Map,
+                    Version,
+                    Gamename,
+                    Player,
+                    State)
 from schema.functions import get_or_create
 
 from sqlalchemy import create_engine
@@ -20,9 +27,6 @@ engine = create_engine(dbstring.format(username=config['database']['username'],
                                        database=config['database']['database']))
 Session = sessionmaker(bind=engine)
 db = Session()
-
-str_fmt = '%Y-%m-%d %H:%M'
-player_regex = re.compile('(?P<score>-?\d+) (?P<ping>\d+) (?P<name>".+")', flags=re.ASCII)
 
 q2header = b'\xff\xff\xff\xff'
 q2servers = q2header + b'status 23\x0a'
@@ -47,6 +51,9 @@ def dictify(message):
 
 
 def update_status(server, serverstatus):
+    """
+    TODO: Clean this up
+    """
     version = get_or_create(db, Version, name=serverstatus.get('version'))
     mapname = get_or_create(db, Map, name=serverstatus.get('mapname'))
     gamename = get_or_create(db, Gamename, name=serverstatus.get('gamename'))
@@ -90,20 +97,22 @@ def update_status(server, serverstatus):
 
 
 def update_players(server, players):
+    player_regex = re.compile('(?P<score>-?\d+) (?P<ping>\d+) (?P<name>".+")', flags=re.ASCII)
+    player_list = []
     db.query(Player).filter(Player.server == server).delete()
     db.commit()
     for playerstate in players:
         if playerstate:
             playerstate = playerstate.decode('ascii')
             playerstate = re.match(player_regex, playerstate)
-            player = Player(
+            playerlist.append(Player(
                 score=int(playerstate.group('score')),
                 ping=int(playerstate.group('ping')),
                 name=playerstate.group('name'),
                 server=server
-            )
-            db.add(player)
-            db.commit()
+            ))
+    db.add_all(playerlist)
+    db.commit()
 
 
 def process_server_info(server, message):
@@ -111,22 +120,30 @@ def process_server_info(server, message):
         status = message[1]
         players = message[2:]
         if players:
-            print(players)
             update_players(server, players)
         if status:
             update_status(server, dictify(status))
 
+if __name__ == '__main__':
+    state = db.query(State).first()
+    if not state.running:
+        state.running = True
+        state.started = datetime.now()
+        db.commit()
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+            s.settimeout(5)
+            for server in db.query(Server).filter(Server.active):
+                try:
+                    print(f"Connecting to {server}...")
+                    s.connect((server.ip, server.port))
+                except socket.error as msg:
+                    print(f"Connection error: {msg}")
+                else:
+                    s.send(q2servers)
+                    data = s.recv(1024)
+                    message = data.split(b'\n')
+                    process_server_info(server, message)
 
-with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
-    s.settimeout(5)
-    for server in db.query(Server).filter(Server.active):
-        try:
-            print(f"Connecting to {server}...")
-            s.connect((server.ip, server.port))
-        except socket.error as msg:
-            print(f"Connection error: {msg}")
-        else:
-            s.send(q2servers)
-            data = s.recv(1024)
-            message = data.split(b'\n')
-            process_server_info(server, message)
+        state.ended = datetime.now()
+        state.running = False
+        db.commit()
