@@ -1,0 +1,3 @@
+[submodule "database"]
+	path = database
+	url = git@github.com:gazwald/quake2master-db.git
