@@ -48,40 +48,23 @@ def update_status(server, serverstatus):
     gamename = get_or_create(db, Gamename, name=serverstatus.get('gamename'))
     clients = db.query(Player).join(Player.server).filter(Player.server == server).count()
     status = db.query(Status).join(Status.server).filter(Status.server == server).first()
-    if status:
-        status.hostname = serverstatus.get('hostname')
-        status.cheats = int(serverstatus.get('cheats'))
-        status.needpass = int(serverstatus.get('needpass'))
-        status.deathmatch = int(serverstatus.get('deathmatch'))
-        status.clients = clients
-        status.maxclients = int(serverstatus.get('maxclients'))
-        status.maxspectators = int(serverstatus.get('maxspectators'))
-        status.timelimit = int(serverstatus.get('timelimit'))
-        status.fraglimit = int(serverstatus.get('fraglimit'))
-        status.protocol = int(serverstatus.get('protocol'))
-        status.dmflags = int(serverstatus.get('dmflags'))
-        status.version = version
-        status.map = mapname
-        status.gamename = gamename
-    else:
-        status = Status(
-            hostname=serverstatus.get('hostname'),
-            cheats=int(serverstatus.get('cheats')),
-            needpass=int(serverstatus.get('needpass')),
-            deathmatch=int(serverstatus.get('deathmatch')),
-            clients=clients,
-            maxclients=int(serverstatus.get('maxclients')),
-            maxspectators=int(serverstatus.get('maxspectators')),
-            timelimit=int(serverstatus.get('timelimit')),
-            fraglimit=int(serverstatus.get('fraglimit')),
-            protocol=int(serverstatus.get('protocol')),
-            dmflags=int(serverstatus.get('dmflags')),
-            server=server,
-            version=version,
-            map=mapname,
-            gamename=gamename,
-        )
-        db.add(status)
+    if not status:
+        status = Status()
+    status.hostname = serverstatus.get('hostname')
+    status.cheats = int(serverstatus.get('cheats'))
+    status.needpass = int(serverstatus.get('needpass'))
+    status.deathmatch = int(serverstatus.get('deathmatch'))
+    status.clients = clients
+    status.maxclients = int(serverstatus.get('maxclients'))
+    status.maxspectators = int(serverstatus.get('maxspectators'))
+    status.timelimit = int(serverstatus.get('timelimit'))
+    status.fraglimit = int(serverstatus.get('fraglimit'))
+    status.protocol = int(serverstatus.get('protocol'))
+    status.dmflags = int(serverstatus.get('dmflags'))
+    status.version = version
+    status.map = mapname
+    status.gamename = gamename
+    db.add(status)
     db.commit()
 
 
@@ -94,13 +77,13 @@ def update_players(server, players):
         if playerstate:
             playerstate = playerstate.decode('ascii')
             playerstate = re.match(player_regex, playerstate)
-            playerlist.append(Player(
+            player_list.append(Player(
                 score=int(playerstate.group('score')),
                 ping=int(playerstate.group('ping')),
                 name=playerstate.group('name'),
                 server=server
             ))
-    db.add_all(playerlist)
+    db.add_all(player_list)
     db.commit()
 
 
