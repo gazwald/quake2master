@@ -17,17 +17,6 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 
-config = configparser.ConfigParser()
-config.read('config.ini')
-dbstring = 'postgresql://{username}:{password}@{host}:{port}/{database}'
-engine = create_engine(dbstring.format(username=config['database']['username'],
-                                       password=config['database']['password'],
-                                       host=config['database']['host'],
-                                       port=config['database']['port'],
-                                       database=config['database']['database']))
-Session = sessionmaker(bind=engine)
-db = Session()
-
 q2header = b'\xff\xff\xff\xff'
 q2servers = q2header + b'status 23\x0a'
 q2print = q2header + b'print'
@@ -124,26 +113,44 @@ def process_server_info(server, message):
         if status:
             update_status(server, dictify(status))
 
+
+def query_servers():
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+        s.settimeout(5)
+        for server in db.query(Server).filter(Server.active):
+            try:
+                print(f"Connecting to {server}...")
+                s.connect((server.ip, server.port))
+            except socket.error as msg:
+                print(f"Connection error: {msg}")
+            else:
+                s.send(q2servers)
+                data = s.recv(1024)
+                message = data.split(b'\n')
+                process_server_info(server, message)
+
+
 if __name__ == '__main__':
+    config = configparser.ConfigParser()
+    config.read('config.ini')
+    dbstring = 'postgresql://{username}:{password}@{host}:{port}/{database}'
+    engine = create_engine(dbstring.format(username=config['database']['username'],
+                                           password=config['database']['password'],
+                                           host=config['database']['host'],
+                                           port=config['database']['port'],
+                                           database=config['database']['database']))
+    Session = sessionmaker(bind=engine)
+    db = Session()
     state = db.query(State).first()
     if not state.running:
         state.running = True
         state.started = datetime.now()
         db.commit()
-        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
-            s.settimeout(5)
-            for server in db.query(Server).filter(Server.active):
-                try:
-                    print(f"Connecting to {server}...")
-                    s.connect((server.ip, server.port))
-                except socket.error as msg:
-                    print(f"Connection error: {msg}")
-                else:
-                    s.send(q2servers)
-                    data = s.recv(1024)
-                    message = data.split(b'\n')
-                    process_server_info(server, message)
+
+        query_servers()
 
         state.ended = datetime.now()
         state.running = False
         db.commit()
+
+    db.close()
