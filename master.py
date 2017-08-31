@@ -27,8 +27,9 @@ class MasterServer:
     def create_db_connection():
         config = configparser.ConfigParser()
         config.read('config.ini')
-        dbstring = 'postgresql://{username}:{password}@{host}:{port}/{database}'
-        engine = create_engine(dbstring.format(username=config['database']['username'],
+        dbstring = '{provider}://{username}:{password}@{host}:{port}/{database}'
+        engine = create_engine(dbstring.format(provider=config['database'].get('provider', 'postgresql'),
+                                               username=config['database']['username'],
                                                password=config['database']['password'],
                                                host=config['database']['host'],
                                                port=config['database']['port'],
