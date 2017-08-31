@@ -4,6 +4,10 @@ This project originally started as a desire to aggregate the server lists for th
 
 However most Quake 2 master servers these days appear to be dead and of the one that isn't dead ([q2servers.com](http://q2servers.com/)) it doesn't appear to support b'query\n\0'.
 
+## Cloning
+git clone ...
+git submodule update --init --recursive
+
 ## Should I use this as a production Quake 2 master server?
 Although I still think the answer is 'no', if you want to use it in production go ahead.
 
