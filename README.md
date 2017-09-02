@@ -4,8 +4,27 @@ This project originally started as a desire to aggregate the server lists for th
 
 However most Quake 2 master servers these days appear to be dead and of the one that isn't dead ([q2servers.com](http://q2servers.com/)) it doesn't appear to support b'query\n\0'.
 
+So what started as an initial curiosity has turned into a rather large project.
+
+## Parts
+### Master
+[Master](https://github.com/gazwald/quake2master) - Contains the core part of the master server. Accepts connections from Quake 2 servers and queries from clients.
+
+### Query Engine
+[Query Engine](https://github.com/gazwald/quake2master-query) - Intended to be run periodically to query the list of servers and gather details about individual Quake 2 servers and the players on them
+
+### Database
+[Database](https://github.com/gazwald/quake2master-db) - Database components that are shared by all of the above as a submodule
+
+### Middleware
+TODO. AWS Lambda functions for the frontend will go here.
+
+### Frontend
+TODO. VueJS Middleware consumer will go here.
+
 ## Cloning
 git clone ...
+
 git submodule update --init --recursive
 
 ## Should I use this as a production Quake 2 master server?
