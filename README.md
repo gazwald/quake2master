@@ -20,7 +20,7 @@ So what started as an initial curiosity has turned into a rather large project.
 TODO. AWS Lambda functions for the frontend will go here.
 
 ### Frontend
-TODO. VueJS Middleware consumer will go here.
+[Frontend](https://github.com/gazwald/quake2master-frontend) - VueJS Middleware consumer will go here.
 
 ## Cloning
 git clone ...
