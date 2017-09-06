@@ -11,16 +11,16 @@ So what started as an initial curiosity has turned into a rather large project.
 [Master](https://github.com/gazwald/quake2master) - Contains the core part of the master server. Accepts connections from Quake 2 servers and queries from clients.
 
 ### Query Engine
-[Query Engine](https://github.com/gazwald/quake2master-query) - Intended to be run periodically to query the list of servers and gather details about individual Quake 2 servers and the players on them
+[Query Engine](https://github.com/gazwald/quake2master-query) - Intended to be run periodically to query the list of servers and gather details about individual Quake 2 servers and the players on them.
+
+### REST
+[REST](https://github.com/gazwald/quake2master-rest) - Pulls server information from the database and presents it as REST interface.
 
 ### Database
 [Database](https://github.com/gazwald/quake2master-db) - Database components that are shared by all of the above as a submodule
 
-### Middleware
-TODO. AWS Lambda functions for the frontend will go here.
-
 ### Frontend
-[Frontend](https://github.com/gazwald/quake2master-frontend) - VueJS Middleware consumer.
+[Frontend](https://github.com/gazwald/quake2master-frontend) - VueJS REST consumer.
 
 ## Cloning
 git clone ...
