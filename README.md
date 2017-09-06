@@ -13,8 +13,8 @@ So what started as an initial curiosity has turned into a rather large project.
 ### Query Engine
 [Query Engine](https://github.com/gazwald/quake2master-query) - Intended to be run periodically to query the list of servers and gather details about individual Quake 2 servers and the players on them.
 
-### REST
-[REST](https://github.com/gazwald/quake2master-rest) - Pulls server information from the database and presents it as REST interface.
+### REST Backend
+[REST Backend](https://github.com/gazwald/quake2master-rest) - Pulls server information from the database and presents it as REST interface.
 
 ### Database
 [Database](https://github.com/gazwald/quake2master-db) - Database components that are shared by all of the above as a submodule
