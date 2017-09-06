@@ -2,19 +2,15 @@
 import asyncio
 import ipaddress
 import struct
-import configparser
 from datetime import datetime
 
 from database.orm import Game, Server
-from database.functions import get_or_create
-
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from database.functions import get_or_create, create_session
 
 
 class MasterServer:
     def __init__(self):
-        self.db = self.create_db_connection()
+        self.db = create_session()
         self.header = b'\xff\xff\xff\xff'
         self.header_ack = b''.join([self.header, b'ack'])
         self.header_servers = b''.join([self.header, b'servers '])
@@ -22,20 +18,6 @@ class MasterServer:
     @staticmethod
     def console_output(message):
         print(f"{datetime.utcnow().isoformat()}: {message}")
-
-    @staticmethod
-    def create_db_connection():
-        config = configparser.ConfigParser()
-        config.read('config.ini')
-        dbstring = '{provider}://{username}:{password}@{host}:{port}/{database}'
-        engine = create_engine(dbstring.format(provider=config['database'].get('provider', 'postgresql'),
-                                               username=config['database']['username'],
-                                               password=config['database']['password'],
-                                               host=config['database']['host'],
-                                               port=config['database']['port'],
-                                               database=config['database']['database']))
-        Session = sessionmaker(bind=engine)
-        return Session()
 
     @staticmethod
     def bytepack(data):
