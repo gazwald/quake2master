@@ -1,4 +1,4 @@
 [submodule "database"]
-	path = database
-  url = https://github.com/gazwald/quake2master-db.git
-  ignore = dirty
+    path = database
+    url = https://github.com/gazwald/quake2master-db.git
+    ignore = dirty
