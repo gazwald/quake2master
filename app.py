@@ -7,7 +7,7 @@ from datetime import datetime
 from database.orm import Game, Server
 from database.functions import (get_or_create,
                                 create_db_session,
-                                create_db_engine)
+                                create_db_conn)
 
 
 class MasterServer:
