@@ -39,64 +39,66 @@ class MasterServer:
 
         return b''.join(serverstring)
 
-    def get_server(self, address):
+    def get_server(self):
         return self.db.query(Server)\
-                      .filter_by(ip=address[0],
-                                 port=address[1]).first()
+                      .filter_by(ip=self.origin[0],
+                                 port=self.origin[1]).first()
 
     def connection_made(self, transport):
         self.transport = transport
 
-    def process_heartbeat(self, address, name):
-        self.console_output(f"Heartbeat from {address[0]}:{address[1]}")
+    def process_heartbeat(self, name):
+        self.console_output(f"Heartbeat from {self.origin[0]}:{self.origin[1]}")
         self.game = get_or_create(self.db, Game, name=name)
-        server = self.get_server(address)
+        server = self.get_server(self.origin)
         if not server:
             server = Server(
                 active=True,
-                ip=address[0],
-                port=address[1],
+                ip=self.origin[0],
+                port=self.origin[1],
                 game=self.game,
             )
             self.db.add(server)
             self.db.commit()
 
-    def process_shutdown(self, address):
-        self.console_output(f"Shutdown from {address[0]}:{address[1]}")
-        server = self.get_server(address)
+    def process_shutdown(self):
+        self.console_output(f"Shutdown from {self.origin[0]}:{self.origin[1]}")
+        server = self.get_server(self.origin)
         if server:
             server.active = False
             self.db.commit()
 
-    def process_ping(self, address):
-        self.console_output(f"Sending ack to {address[0]}:{address[1]}")
-        server = self.get_server(address)
+    def process_ping(self):
+        self.console_output(f"Sending ack to {self.origin[0]}:{self.origin[1]}")
+        server = self.get_server(self.origin)
         if server:
             server.active = True
             self.db.commit()
-        self.transport.sendto(self.header_ack, address)
+        self.transport.sendto(self.header_ack, self.origin)
 
-    def process_query(self, destination):
+    def process_query(self):
         self.console_output(f"Sending servers to {destination[0]}:{destination[1]}")
         servers = self.fetch_servers()
-        self.transport.sendto(servers, destination)
+        self.transport.sendto(servers, self.origin)
 
     def datagram_received(self, data, address):
-        self.message = data.split(b'\n')
-        if self.message[0].startswith(self.header):
-            command = self.message[0][4:]
+        self.origin = address
+
+        message = data.split(b'\n')
+        if message[0].startswith(self.header):
+            command = message[0][4:]
             if command.startswith(b"heartbeat"):
-                self.process_heartbeat(address, 'q2')
+                self.process_heartbeat('q2')
             elif command.startswith(b"shutdown"):
-                self.process_shutdown(address)
+                self.process_shutdown()
             elif command.startswith(b"ping"):
-                self.process_ping(address)
+                self.process_ping()
             else:
-                print(f"Unknown command: {command}")
-        elif self.message[0].startswith(b"query"):
-            self.process_query(address)
+                self.console_output(f"Unknown command: {command}")
+        elif message[0].startswith(b"query"):
+            self.process_query()
         else:
-            print(f"Unknown command: {command}")
+            self.console_output(f"Unable to process message")
 
         self.db.close()
 
@@ -107,7 +109,7 @@ if __name__ == '__main__':
     """
     LOCAL = ('0.0.0.0', 27900)
     loop = asyncio.get_event_loop()
-    MasterServer.console_output(f"Starting Quake 2 master server on {LOCAL[0]}:{LOCAL[1]}")
+    MasterServer.console_output(f"Starting master server on {LOCAL[0]}:{LOCAL[1]}")
     listen = loop.create_datagram_endpoint(MasterServer, local_addr=LOCAL)
     transport, protocol = loop.run_until_complete(listen)
 
@@ -116,6 +118,6 @@ if __name__ == '__main__':
     except KeyboardInterrupt:
         pass
 
-    MasterServer.console_output(f"Shutting down Quake 2 master server")
+    MasterServer.console_output(f"Shutting down master server")
     transport.close()
     loop.close()
