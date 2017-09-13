@@ -5,12 +5,14 @@ import struct
 from datetime import datetime
 
 from database.orm import Game, Server
-from database.functions import get_or_create, create_session
+from database.functions import (get_or_create,
+                                create_db_session,
+                                create_db_engine)
 
 
 class MasterServer:
-    def __init__(self):
-        self.db = create_session()
+    def __init__(self, engine):
+        self.db = create_session(engine)
         self.header = b'\xff\xff\xff\xff'
         self.header_ack = b''.join([self.header, b'ack'])
         self.header_servers = b''.join([self.header, b'servers '])
@@ -107,10 +109,11 @@ if __name__ == '__main__':
     """
     asyncio magic
     """
-    LOCAL = ('0.0.0.0', 27900)
+    engine = create_db_engine()
     loop = asyncio.get_event_loop()
     MasterServer.console_output(f"Starting master server on {LOCAL[0]}:{LOCAL[1]}")
-    listen = loop.create_datagram_endpoint(MasterServer, local_addr=LOCAL)
+    listen = loop.create_datagram_endpoint(MasterServer(engine),
+                                           local_addr=('0.0.0.0', 27900))
     transport, protocol = loop.run_until_complete(listen)
 
     try:
