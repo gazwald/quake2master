@@ -11,8 +11,7 @@ from database.functions import (get_or_create,
 
 
 class MasterServer:
-    def __init__(self, engine):
-        self.db = create_session(engine)
+    def __init__(self):
         self.header = b'\xff\xff\xff\xff'
         self.header_ack = b''.join([self.header, b'ack'])
         self.header_servers = b''.join([self.header, b'servers '])
@@ -33,7 +32,7 @@ class MasterServer:
 
     def fetch_servers(self):
         serverstring = [self.header_servers]
-        for server in self.db.query(Server)\
+        for server in session.query(Server)\
                              .filter(Server.active)\
                              .with_entities(Server.ip,
                                             Server.port).all():
@@ -42,7 +41,7 @@ class MasterServer:
         return b''.join(serverstring)
 
     def get_server(self):
-        return self.db.query(Server)\
+        return session.query(Server)\
                       .filter_by(ip=self.origin[0],
                                  port=self.origin[1]).first()
 
@@ -51,8 +50,8 @@ class MasterServer:
 
     def process_heartbeat(self, name):
         self.console_output(f"Heartbeat from {self.origin[0]}:{self.origin[1]}")
-        self.game = get_or_create(self.db, Game, name=name)
-        server = self.get_server(self.origin)
+        self.game = get_or_create(session, Game, name=name)
+        server = self.get_server()
         if not server:
             server = Server(
                 active=True,
@@ -60,17 +59,17 @@ class MasterServer:
                 port=self.origin[1],
                 game=self.game,
             )
-            self.db.add(server)
+            session.add(server)
 
     def process_shutdown(self):
         self.console_output(f"Shutdown from {self.origin[0]}:{self.origin[1]}")
-        server = self.get_server(self.origin)
+        server = self.get_server()
         if server:
             server.active = False
 
     def process_ping(self):
         self.console_output(f"Sending ack to {self.origin[0]}:{self.origin[1]}")
-        server = self.get_server(self.origin)
+        server = self.get_server()
         if server:
             server.active = True
         self.transport.sendto(self.header_ack, self.origin)
@@ -100,21 +99,20 @@ class MasterServer:
             self.console_output(f"Unable to process message")
 
         try:
-            self.db.commit()
+            session.commit()
         except:
-            self.db.rollback()
-        finally:
-            self.db.close()
+            session.rollback()
 
 
 if __name__ == '__main__':
     """
     asyncio magic
     """
-    engine = create_db_engine()
+    engine = create_db_conn()
+    session = create_db_session(engine)
     loop = asyncio.get_event_loop()
-    MasterServer.console_output(f"Starting master server on {LOCAL[0]}:{LOCAL[1]}")
-    listen = loop.create_datagram_endpoint(MasterServer(engine),
+    MasterServer.console_output(f"Starting master server")
+    listen = loop.create_datagram_endpoint(MasterServer,
                                            local_addr=('0.0.0.0', 27900))
     transport, protocol = loop.run_until_complete(listen)
 
@@ -124,5 +122,6 @@ if __name__ == '__main__':
         pass
 
     MasterServer.console_output(f"Shutting down master server")
+    session.close()
     transport.close()
     loop.close()
