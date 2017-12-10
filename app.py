@@ -61,21 +61,18 @@ class MasterServer:
                 game=self.game,
             )
             self.db.add(server)
-            self.db.commit()
 
     def process_shutdown(self):
         self.console_output(f"Shutdown from {self.origin[0]}:{self.origin[1]}")
         server = self.get_server(self.origin)
         if server:
             server.active = False
-            self.db.commit()
 
     def process_ping(self):
         self.console_output(f"Sending ack to {self.origin[0]}:{self.origin[1]}")
         server = self.get_server(self.origin)
         if server:
             server.active = True
-            self.db.commit()
         self.transport.sendto(self.header_ack, self.origin)
 
     def process_query(self):
@@ -102,7 +99,12 @@ class MasterServer:
         else:
             self.console_output(f"Unable to process message")
 
-        self.db.close()
+        try:
+            self.db.commit()
+        except:
+            self.db.rollback()
+        finally:
+            self.db.close()
 
 
 if __name__ == '__main__':
