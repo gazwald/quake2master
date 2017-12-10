@@ -14,6 +14,7 @@ class MasterServer:
     def __init__(self):
         self.header = b'\xff\xff\xff\xff'
         self.header_ack = b''.join([self.header, b'ack'])
+        self.header_stat = b''.join([self.header, b'stat'])
         self.header_servers = b''.join([self.header, b'servers '])
 
     @staticmethod
@@ -74,8 +75,11 @@ class MasterServer:
             server.active = True
         self.transport.sendto(self.header_ack, self.origin)
 
+    def process_stat(self):
+        self.transport.sendto(self.header_ack, self.origin)
+
     def process_query(self):
-        self.console_output(f"Sending servers to {destination[0]}:{destination[1]}")
+        self.console_output(f"Sending servers to {self.origin[0]}:{self.origin[1]}")
         servers = self.fetch_servers()
         self.transport.sendto(servers, self.origin)
 
@@ -83,7 +87,9 @@ class MasterServer:
         self.origin = address
 
         message = data.split(b'\n')
-        if message[0].startswith(self.header):
+        if message[0].startswith(self.header_stat):
+            self.process_stat()
+        elif message[0].startswith(self.header):
             command = message[0][4:]
             if command.startswith(b"heartbeat"):
                 self.process_heartbeat('q2')
