@@ -29,7 +29,8 @@ class MasterServer:
         Ports are stored as Integers in Postgres
         """
         ip = ipaddress.IPv4Address(data[0])
-        return struct.pack('!LH', int(ip), data[1])
+        port = data[1]
+        return struct.pack('!LH', int(ip), port)
 
     def fetch_servers(self):
         serverstring = [self.header_servers]
