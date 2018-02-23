@@ -1,0 +1,11 @@
+[Unit]
+Description=Quake 2 Master Server
+After=multi-user.target
+
+[Service]
+Type=idle
+Restart=always
+ExecStart=/usr/bin/python3 /opt/quake2master/app.py
+
+[Install]
+WantedBy=multi-user.target
