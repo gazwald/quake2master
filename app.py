@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 import asyncio
+import signal
+import functools
+from sqlalchemy import exc
 
 from database.functions import (create_db_session,
                                 create_db_conn)
@@ -40,8 +43,15 @@ class MasterServer(Common):
 
         try:
             session.commit()
-        except:
+        except exc.SQLAlchemyError:
             session.rollback()
+
+
+def shutdown(signal):
+    Common.console_output(f"Caught {signal}, shutting down master server")
+    session.close()
+    transport.close()
+    loop.stop()
 
 
 if __name__ == '__main__':
@@ -52,16 +62,15 @@ if __name__ == '__main__':
     q2 = Quake2(session)
 
     loop = asyncio.get_event_loop()
+    for signame in ('SIGINT', 'SIGTERM'):
+        loop.add_signal_handler(getattr(signal, signame),
+                                functools.partial(shutdown, signame))
+
     listen = loop.create_datagram_endpoint(MasterServer,
                                            local_addr=('0.0.0.0', 27900))
     transport, protocol = loop.run_until_complete(listen)
 
     try:
         loop.run_forever()
-    except KeyboardInterrupt:
-        pass
-
-    Common.console_output(f"Shutting down master server")
-    session.close()
-    transport.close()
-    loop.close()
+    finally:
+        loop.close()
