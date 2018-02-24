@@ -70,7 +70,8 @@ class Quake2(Master):
 
         return self.q2header_ack
 
-    def process_query(self):
+    def process_query(self, address):
+        self.console_output(f"Sending servers to {address[0]}:{address[1]}")
         serverstring = [self.q2header_servers]
         for server in self.session.query(Server)\
                                   .filter(Server.active)\
