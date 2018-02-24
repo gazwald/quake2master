@@ -6,7 +6,7 @@ from database.orm import Game, Server
 from database.functions import get_or_create
 
 
-class Common:
+class Common():
     def __init__(self):
         self.q2header = b'\xff\xff\xff\xff'
         self.q2header_ack = b''.join([self.q2header, b'ack'])
@@ -19,9 +19,10 @@ class Common:
 
 class Master(Common):
     def __init__(self, session):
+        super().__init__()
         self.session = session
 
-    def bytepack(data):
+    def bytepack(self, data):
         """
         Pack an IP (4 bytes) and Port (2 bytes) together
         IP addresses are stored as INET in Postgres
@@ -34,7 +35,7 @@ class Master(Common):
 
 class Quake2(Master):
     def get_server(self, address):
-        return self.session.query(Server, address)\
+        return self.session.query(Server)\
                            .filter_by(ip=address[0],
                                       port=address[1]).first()
 

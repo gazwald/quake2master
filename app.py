@@ -31,7 +31,7 @@ class MasterServer(Common):
                 self.console_output(f"Unknown command: {command}")
         elif message[0].startswith(b"query"):
             self.console_output(f"Sending servers to {address[0]}:{address[1]}")
-            reply = q2.process_query(address)
+            reply = q2.process_query()
         else:
             self.console_output(f"Unable to process message")
 
