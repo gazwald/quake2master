@@ -36,6 +36,7 @@ class Master():
         command = data[:13]
         if command.startswith(Headers.q2header_ping) or \
            command.startswith(Headers.q2header_heartbeat) or \
+           command.startswith(Headers.q2header_shutdown) or \
            command.startswith(Headers.q2query):
             return True
         else:
