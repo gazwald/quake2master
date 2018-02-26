@@ -7,10 +7,10 @@ from sqlalchemy import exc
 from database.functions import (create_db_session,
                                 create_db_conn)
 
-from masters import Common, Quake2
+from masters import Master, Quake2
 
 
-class MasterServer(Common):
+class MasterServer():
     def connection_made(self, transport):
         self.transport = transport
 
@@ -22,7 +22,7 @@ class MasterServer(Common):
 
         if data.startswith(b'stat_ping'):
             reply = self.process_stat(address)
-        else:
+        elif Master.is_q2(data):
             reply = q2.process_request(data, address)
 
         if reply:

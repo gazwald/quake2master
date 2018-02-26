@@ -32,6 +32,14 @@ class Master(Common):
         port = data[1]
         return struct.pack('!LH', int(ip), port)
 
+    @staticmethod
+    def is_q2(data):
+        message = data[4:]
+        if data.startswith(self.q2header) or data.startwith(b"query"):
+            return True
+        else:
+            return False
+
 
 class Quake2(Master):
     def get_server(self, address):
