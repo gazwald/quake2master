@@ -7,10 +7,12 @@ from database.functions import get_or_create
 
 
 class Common():
-    def __init__(self):
-        self.q2header = b'\xff\xff\xff\xff'
-        self.q2header_ack = b''.join([self.q2header, b'ack'])
-        self.q2header_servers = b''.join([self.q2header, b'servers '])
+    q2header = b'\xff\xff\xff\xff'
+    q2header_ack = b''.join([q2header, b'ack'])
+    q2header_servers = b''.join([q2header, b'servers '])
+    q2header_ping = b''.join([q2header, b'ping'])
+    q2header_heartbeat = b''.join([q2header, b'heartbeat'])
+    q2query = b'query'
 
     @staticmethod
     def console_output(message):
@@ -34,8 +36,10 @@ class Master(Common):
 
     @staticmethod
     def is_q2(data):
-        message = data[4:]
-        if data.startswith(self.q2header) or data.startwith(b"query"):
+        command = data[:13]
+        if command.startswith(Common.q2header_ping) or \
+           command.startswith(Common.q2header_heartbeat) or \
+           command.startswith(Common.q2query):
             return True
         else:
             return False
@@ -76,11 +80,11 @@ class Quake2(Master):
         if server:
             server.active = True
 
-        return self.q2header_ack
+        return Common.q2header_ack
 
     def process_query(self, address):
         self.console_output(f"Sending servers to {address[0]}:{address[1]}")
-        serverstring = [self.q2header_servers]
+        serverstring = [Common.q2header_servers]
         for server in self.session.query(Server)\
                                   .filter(Server.active)\
                                   .with_entities(Server.ip,
@@ -90,8 +94,9 @@ class Quake2(Master):
         return b''.join(serverstring)
 
     def process_request(self, data, address):
+        reply = None
         message = data.split(b'\n')
-        if message[0].startswith(self.q2header):
+        if message[0].startswith(Common.q2header):
             command = message[0][4:]
             if command.startswith(b"heartbeat"):
                 reply = self.process_heartbeat(address)
@@ -105,3 +110,5 @@ class Quake2(Master):
             reply = self.process_query(address)
         else:
             self.console_output(f"Unable to process message")
+
+        return reply

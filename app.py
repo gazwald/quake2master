@@ -35,14 +35,14 @@ class MasterServer():
 
 
 def shutdown(signal):
-    Common.console_output(f"Caught {signal}, shutting down master server")
+    Master.console_output(f"Caught {signal}, shutting down master server")
     session.close()
     transport.close()
     loop.stop()
 
 
 if __name__ == '__main__':
-    Common.console_output(f"Starting master server")
+    Master.console_output(f"Starting master server")
 
     engine = create_db_conn()
     session = create_db_session(engine)
