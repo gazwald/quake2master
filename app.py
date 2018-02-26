@@ -19,23 +19,11 @@ class MasterServer(Common):
 
     def datagram_received(self, data, address):
         reply = None
-        message = data.split(b'\n')
-        if message[0].startswith(b'stat_ping'):
+
+        if data.startswith(b'stat_ping'):
             reply = self.process_stat(address)
-        elif message[0].startswith(self.q2header):
-            command = message[0][4:]
-            if command.startswith(b"heartbeat"):
-                reply = q2.process_heartbeat(address)
-            elif command.startswith(b"shutdown"):
-                reply = q2.process_shutdown(address)
-            elif command.startswith(b"ping"):
-                reply = q2.process_ping(address)
-            else:
-                self.console_output(f"Unknown command: {command}")
-        elif message[0].startswith(b"query"):
-            reply = q2.process_query(address)
         else:
-            self.console_output(f"Unable to process message")
+            reply = q2.process_request(data, address)
 
         if reply:
             self.transport.sendto(reply, address)

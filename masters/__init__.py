@@ -80,3 +80,20 @@ class Quake2(Master):
             serverstring.append(self.bytepack(server))
 
         return b''.join(serverstring)
+
+    def process_request(self, data, address):
+        message = data.split(b'\n')
+        if message[0].startswith(self.q2header):
+            command = message[0][4:]
+            if command.startswith(b"heartbeat"):
+                reply = self.process_heartbeat(address)
+            elif command.startswith(b"shutdown"):
+                reply = self.process_shutdown(address)
+            elif command.startswith(b"ping"):
+                reply = self.process_ping(address)
+            else:
+                self.console_output(f"Unknown command: {command}")
+        elif message[0].startswith(b"query"):
+            reply = self.process_query(address)
+        else:
+            self.console_output(f"Unable to process message")
