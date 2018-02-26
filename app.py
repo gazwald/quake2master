@@ -2,6 +2,7 @@
 import asyncio
 import signal
 import functools
+import logging
 from sqlalchemy import exc
 
 from database.functions import (create_db_session,
@@ -34,15 +35,19 @@ class MasterServer():
             session.rollback()
 
 
-def shutdown(signal):
-    Master.console_output(f"Caught {signal}, shutting down master server")
+def shutdown(sig):
+    logging.info(f"Caught {sig}, shutting down master server")
     session.close()
     transport.close()
     loop.stop()
 
 
 if __name__ == '__main__':
-    Master.console_output(f"Starting master server")
+    logging.basicConfig(filename='master.log',
+                        level=logging.DEBUG,
+                        format='%(asctime)s %(levelname)s %(message)s',
+                        datefmt='%Y-%m-%d %H:%M:%S')
+    logging.info(f"Starting master server")
 
     engine = create_db_conn()
     session = create_db_session(engine)
