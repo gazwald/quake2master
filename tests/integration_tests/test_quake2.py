@@ -11,7 +11,7 @@ from masters import Headers, Quake2
 
 class TestQuake2(TestCase):
     def setUp(self):
-        self.engine = create_engine('postgresql://test_user:test_pass@127.0.0.1:5432')
+        self.engine = create_engine('postgresql://test_user:test_pass@127.0.0.1:5432/q2m')
         Base.metadata.create_all(self.engine)
         self.session = sessionmaker(bind=self.engine)
 
