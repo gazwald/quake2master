@@ -20,4 +20,4 @@ class TestQuake2(TestCase):
         q2 = Quake2(self.session)
         result = q2.process_ping(('127.0.0.1', 27910))
         self.assertEqual(result, Headers.q2header_ack)
-        self.assertIsInstance(Server, Quake2.get_server(('127.0.0.1', 27910)))
+        self.assertIsInstance(Server, Quake2.get_server(address=('127.0.0.1', 27910)))
