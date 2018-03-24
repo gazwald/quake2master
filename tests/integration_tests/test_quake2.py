@@ -20,7 +20,3 @@ class TestQuake2(TestCase):
         q2 = Quake2(self.session)
         result = q2.process_ping(('127.0.0.1', 27910))
         self.assertEqual(result, Headers.q2header_ack)
-        server = self.session.query(Server)\
-                             .filter_by(ip='127.0.0.1',
-                                        port=27910).first()
-        self.assertIsInstance(Server, server)
