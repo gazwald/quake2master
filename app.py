@@ -24,22 +24,22 @@ class MasterServer():
         if data.startswith(b'stat_ping'):
             reply = self.process_stat(address)
         elif Master.is_q2(data):
-            reply = q2.process_request(data, address)
+            reply = Q2.process_request(data, address)
 
         if reply:
             self.transport.sendto(reply, address)
 
         try:
-            session.commit()
+            SESSION.commit()
         except exc.SQLAlchemyError:
-            session.rollback()
+            SESSION.rollback()
 
 
 def shutdown(sig):
     logging.info(f"Caught {sig}, shutting down master server")
-    session.close()
-    transport.close()
-    loop.stop()
+    SESSION.close()
+    TRANSPORT.close()
+    LOOP.stop()
 
 
 if __name__ == '__main__':
@@ -49,20 +49,20 @@ if __name__ == '__main__':
                         datefmt='%Y-%m-%d %H:%M:%S')
     logging.info(f"Starting master server")
 
-    engine = create_db_conn()
-    session = create_db_session(engine)
-    q2 = Quake2(session)
+    ENGINE = create_db_conn()
+    SESSION = create_db_session(ENGINE)
+    Q2 = Quake2(SESSION)
 
-    loop = asyncio.get_event_loop()
+    LOOP = asyncio.get_event_loop()
     for signame in ('SIGINT', 'SIGTERM'):
-        loop.add_signal_handler(getattr(signal, signame),
+        LOOP.add_signal_handler(getattr(signal, signame),
                                 functools.partial(shutdown, signame))
 
-    listen = loop.create_datagram_endpoint(MasterServer,
+    LISTEN = LOOP.create_datagram_endpoint(MasterServer,
                                            local_addr=('0.0.0.0', 27900))
-    transport, protocol = loop.run_until_complete(listen)
+    TRANSPORT, PROTOCOL = LOOP.run_until_complete(LISTEN)
 
     try:
-        loop.run_forever()
+        LOOP.run_forever()
     finally:
-        loop.close()
+        LOOP.close()
