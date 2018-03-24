@@ -1,0 +1,22 @@
+stream {
+    log_format    basic    '$time_iso8601 $remote_addr '
+                           '$protocol $status $bytes_sent $bytes_received '
+                           '$session_time $upstream_addr '
+                           '"$upstream_bytes_sent" "$upstream_bytes_received" "$upstream_connect_time"';
+
+    upstream quake2_masters {
+        server 192.168.1.1:27900;
+        server 192.168.1.2:27900;
+        server 192.168.1.3:27900;
+    }
+
+    server {
+        listen 27900 udp;
+
+        proxy_timeout 5s;
+        proxy_pass quake2_masters;
+        proxy_bind $remote_addr:$remote_port transparent;
+
+        access_log /var/opt/rh/rh-nginx112/log/nginx/stream.log basic;
+    }
+}

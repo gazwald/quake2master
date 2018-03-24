@@ -1,0 +1,6 @@
+[database]
+database = q2m
+username = q2m
+password = G'Day
+host = 127.0.0.1
+port = 5432
