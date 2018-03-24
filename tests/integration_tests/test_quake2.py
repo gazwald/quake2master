@@ -3,17 +3,18 @@ from unittest.mock import patch
 import logging
 
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
 
 from database.orm import Base, Server
+from database.functions import create_db_session
+
 from masters import Headers, Quake2
 
 
 class TestQuake2(TestCase):
     def setUp(self):
-        self.engine = create_engine('postgresql://test_user:test_pass@localhost:5432/test_q2m')
-        Base.metadata.create_all(self.engine)
-        self.session = sessionmaker(bind=self.engine)
+        engine = create_engine('postgresql://test_user:test_pass@localhost:5432/test_q2m')
+        Base.metadata.create_all(engine)
+        self.session = create_db_session(engine)
 
     def test_quake2_process_ping(self):
         q2 = Quake2(self.session)
