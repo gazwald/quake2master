@@ -1,10 +1,10 @@
 from unittest import TestCase
-from unittest.mock import patch
-import logging
+# from unittest.mock import patch
+# import logging
 
 from sqlalchemy import create_engine
 
-from database.orm import Base, Server
+from database.orm import Base
 from database.functions import create_db_session
 
 from masters import Headers, Quake2
