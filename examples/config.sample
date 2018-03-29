@@ -1,4 +1,30 @@
+# Example configuration file for the master server
+# Entries that are commented out are there for reference
+# and are currently set to their default.
+#
+# Expected filename: config.ini
+
+[general]
+# Environment refers to the environment that 
+# the server will be running in.
+#
+# Currently accepted values:
+#   production
+#   testing
+#
+# The value should have its own configuration block 
+# below that includes database connection information.
+#
+#environment = production
+#address = 0.0.0.0
+#port = 27900
+
+[logging]
+#log = master.log
+#level = info 
+
 [production]
+#provider = postgresql
 database = q2m
 username = q2m
 password = G'Day
@@ -6,6 +32,7 @@ host = 127.0.0.1
 port = 5432
 
 [testing]
+#provider = postgresql
 database = test_q2m
 username = test_q2m
 password = test_G'Day
