@@ -1,6 +1,13 @@
-[database]
+[production]
 database = q2m
 username = q2m
 password = G'Day
+host = 127.0.0.1
+port = 5432
+
+[testing]
+database = test_q2m
+username = test_q2m
+password = test_G'Day
 host = 127.0.0.1
 port = 5432

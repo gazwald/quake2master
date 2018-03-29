@@ -2,17 +2,16 @@ from unittest import TestCase
 # from unittest.mock import patch
 # import logging
 
-from sqlalchemy import create_engine
-
 from database.orm import Base
-from database.functions import create_db_session
+from database.functions import (create_db_conn,
+                                create_db_session)
 
 from masters import Headers, Quake2
 
 
 class TestQuake2(TestCase):
     def setUp(self):
-        engine = create_engine('postgresql://test_user:test_pass@localhost:5432/test_q2m')
+        engine = create_db_conn('testing')
         Base.metadata.create_all(engine)
         self.session = create_db_session(engine)
 

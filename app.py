@@ -49,7 +49,7 @@ if __name__ == '__main__':
                         datefmt='%Y-%m-%d %H:%M:%S')
     logging.info(f"Starting master server")
 
-    ENGINE = create_db_conn()
+    ENGINE = create_db_conn('production')
     SESSION = create_db_session(ENGINE)
     Q2 = Quake2(SESSION)
 
