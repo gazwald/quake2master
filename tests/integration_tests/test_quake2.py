@@ -26,8 +26,9 @@ class TestQuake2(TestCase):
 
     def tearDown(self):
         del self.q2
-        Base.metadata.drop_all(self.engine)
         self.session.close()
+        del self.session
+        Base.metadata.drop_all(self.engine)
         del self.engine
 
     def test_quake2_process_ping(self):
