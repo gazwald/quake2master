@@ -67,8 +67,8 @@ class TestQuake2(TestCase):
         However it should set as server to inactive
         Requires process_heartbeat to create entry
         """
-        result = self.q2.process_heartbeat(self.server1)
-        self.assertIsNone(result)
+        self.q2.process_heartbeat(self.server1)
+        self.q2.process_shutdown(self.server1)
 
         server = self.q2.get_server(self.server1)
         self.assertFalse(server.active)
