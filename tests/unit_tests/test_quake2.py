@@ -9,6 +9,9 @@ class TestQuake2(TestCase):
     def setUp(self):
         self.q2 = Quake2(None)
 
+    def tearDown(self):
+        del self.q2
+
     def test_quake2(self):
         self.assertIsInstance(self.q2, Quake2)
 
