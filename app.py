@@ -9,7 +9,7 @@ from sqlalchemy import exc
 from database.functions import (create_db_session,
                                 create_db_conn)
 
-from masters import idCommon, Quake2Master
+from games import idTechCommon, Quake2Master
 
 
 class MasterServer():
@@ -24,7 +24,7 @@ class MasterServer():
 
         if data.startswith(b'stat_ping'):
             reply = self.process_stat(address)
-        elif idCommon.is_q2(data):
+        elif idTechCommon.is_q2(data):
             reply = Q2.process_request(data, address)
 
         if reply:

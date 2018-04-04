@@ -5,7 +5,7 @@ from database.orm import Base
 from database.functions import (create_db_conn,
                                 create_db_session)
 
-from masters import Headers, Quake2
+from games import Headers, Quake2Master
 
 
 class TestQuake2(TestCase):
@@ -22,7 +22,7 @@ class TestQuake2(TestCase):
         self.server3 = ('127.0.0.3', 27930)
         self.server4 = ('127.0.0.4', 27940)
 
-        self.q2 = Quake2(self.session)
+        self.q2 = Quake2Master(self.session)
 
     def tearDown(self):
         del self.q2
