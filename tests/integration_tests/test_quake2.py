@@ -5,7 +5,8 @@ from database.orm import Base
 from database.functions import (create_db_conn,
                                 create_db_session)
 
-from games import Headers, Quake2Master
+from games.shared import Headers
+from games import Quake2Master
 
 
 class TestQuake2(TestCase):
