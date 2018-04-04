@@ -1,1 +1,1 @@
-from games.quake2master import Quake2Master
+from games.quake2.master import Quake2Master
