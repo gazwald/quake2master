@@ -19,7 +19,7 @@ class Headers():
     q2query = b'query'
 
 
-class Master():
+class idCommon():
     """
     Parent class, intended for functions that will be
     common among idtech servers
@@ -53,7 +53,7 @@ class Master():
         return False
 
 
-class Quake2(Master):
+class Quake2Master(idCommon):
     """
     Functions specific to responding to Quake 2 Servers and Clients
     """

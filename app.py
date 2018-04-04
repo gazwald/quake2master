@@ -9,7 +9,7 @@ from sqlalchemy import exc
 from database.functions import (create_db_session,
                                 create_db_conn)
 
-from masters import Master, Quake2
+from masters import idCommon, Quake2Master
 
 
 class MasterServer():
@@ -24,7 +24,7 @@ class MasterServer():
 
         if data.startswith(b'stat_ping'):
             reply = self.process_stat(address)
-        elif Master.is_q2(data):
+        elif idCommon.is_q2(data):
             reply = Q2.process_request(data, address)
 
         if reply:
@@ -56,7 +56,7 @@ if __name__ == '__main__':
 
     ENGINE = create_db_conn(config['general'].get('environment', 'production'))
     SESSION = create_db_session(ENGINE)
-    Q2 = Quake2(SESSION)
+    Q2 = Quake2Master(SESSION)
 
     LOOP = asyncio.get_event_loop()
     for signame in ('SIGINT', 'SIGTERM'):
