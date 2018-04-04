@@ -9,7 +9,8 @@ from sqlalchemy import exc
 from database.functions import (create_db_session,
                                 create_db_conn)
 
-from games import idTechCommon, Quake2Master
+from games.shared import idTechCommon
+from games import Quake2Master
 
 
 class MasterServer():
