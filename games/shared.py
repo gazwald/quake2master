@@ -119,7 +119,7 @@ class Master(idTechCommon):
         if server:
             server.active = True
 
-        return self.headers[self.game]['ack']
+        return idTechCommon.headers[self.game]['ack']
 
     def process_query(self, address):
         """
@@ -128,7 +128,7 @@ class Master(idTechCommon):
         """
         logging.info(f"Sending servers to {address[0]}:{address[1]}")
         if self.game.name == 'quake2':
-            serverstring = [self.headers[self.game]['servers']]
+            serverstring = [idTechCommon.headers[self.game]['servers']]
         else:
             serverstring = []
 
