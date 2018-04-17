@@ -5,7 +5,7 @@ from database.orm import Base
 from database.functions import (create_db_conn,
                                 create_db_session)
 
-from games.shared import Headers
+from games.shared import idTechCommon
 from games import Quake2Master
 
 
@@ -43,10 +43,10 @@ class TestQuake2(TestCase):
         self.q2.process_shutdown(self.server2)
 
         result = self.q2.process_ping(self.server1)
-        self.assertEqual(result, Headers.q2header_ack)
+        self.assertEqual(result, idTechCommon.headers['quake2']['ack'])
 
         result = self.q2.process_ping(self.server2)
-        self.assertEqual(result, Headers.q2header_ack)
+        self.assertEqual(result, idTechCommon.headers['quake2']['ack'])
 
         server = self.q2.get_server(self.server2)
         self.assertTrue(server.active)
@@ -86,7 +86,7 @@ class TestQuake2(TestCase):
         self.q2.process_shutdown(self.server3)
         self.q2.process_heartbeat(self.server4)
 
-        expected_result = b''.join([Headers.q2header_servers,
+        expected_result = b''.join([idTechCommon.headers['quake2']['servers'],
                                     self.q2.bytepack(self.server1),
                                     self.q2.bytepack(self.server2),
                                     self.q2.bytepack(self.server4)])
