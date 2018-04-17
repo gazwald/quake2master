@@ -7,28 +7,27 @@ from sqlalchemy import and_
 from database.orm import Server
 
 
-class Headers():
-    """
-    A collection of headers - not intended to be game specific
-    """
-    q2header = b'\xff\xff\xff\xff'
-    # Master specific
-    q2header_ack = b''.join([q2header, b'ack'])
-    q2header_servers = b''.join([q2header, b'servers '])
-    q2header_ping = b''.join([q2header, b'ping'])
-    q2header_shutdown = b''.join([q2header, b'shutdown'])
-    q2header_heartbeat = b''.join([q2header, b'heartbeat'])
-    # Query specific
-    q2query = b'query'
-    q2header_query = b''.join([q2header, b'status 23\x0a'])
-    q2header_print = b''.join([q2header, b'print'])
-
-
 class idTechCommon():
     """
     Parent class, intended for functions that will be
     common among idtech servers
     """
+
+    common = b'\xff\xff\xff\xff'
+    # Master specific
+    headers = dict(
+        quake2=dict(
+            ack=b''.join([common, b'ack']),
+            servers=b''.join([common, b'servers ']),
+            ping=b''.join([common, b'ping']),
+            shutdown=b''.join([common, b'shutdown']),
+            heartbeat=b''.join([common, b'heartbeat']),
+            query=b'query',
+            server_query=b''.join([common, b'status 23\x0a']),
+            server_print=b''.join([common, b'print'])
+        )
+    )
+
     @classmethod
     def bytepack(cls, data):
         """
@@ -46,13 +45,7 @@ class idTechCommon():
         Determines if a specific request is a Quake 2 server or client
         """
         command = data[:13]
-        if command.startswith(Headers.q2header_ping) or \
-           command.startswith(Headers.q2header_heartbeat) or \
-           command.startswith(Headers.q2header_shutdown) or \
-           command.startswith(Headers.q2query):
-            return True
-
-        return False
+        return any(v for v in idTechCommon.headers['quake2'].values() if v.startswith(command))
 
 
 class Master(idTechCommon):
@@ -74,20 +67,6 @@ class Master(idTechCommon):
         ip_address = ipaddress.IPv4Address(data[0])
         port = data[1]
         return struct.pack('!LH', int(ip_address), port)
-
-    @classmethod
-    def is_q2(cls, data):
-        """
-        Determines if a specific request is a Quake 2 server or client
-        """
-        command = data[:13]
-        if command.startswith(Headers.q2header_ping) or \
-           command.startswith(Headers.q2header_heartbeat) or \
-           command.startswith(Headers.q2header_shutdown) or \
-           command.startswith(Headers.q2query):
-            return True
-
-        return False
 
     def get_server(self, address):
         """
@@ -139,8 +118,8 @@ class Master(idTechCommon):
         server = self.get_server(address)
         if server:
             server.active = True
-        
-        return Headers.q2header_ack
+
+        return self.headers[self.game]['ack']
 
     def process_query(self, address):
         """
@@ -149,7 +128,7 @@ class Master(idTechCommon):
         """
         logging.info(f"Sending servers to {address[0]}:{address[1]}")
         if self.game.name == 'quake2':
-            serverstring = [Headers.q2header_servers]
+            serverstring = [self.headers[self.game]['servers']]
         else:
             serverstring = []
 
