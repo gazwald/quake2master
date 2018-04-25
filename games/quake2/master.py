@@ -23,7 +23,7 @@ class Quake2Master(Master):
 
         message = data.split(b'\n')
         if message[0].startswith(idTechCommon.headers['quake2']['heartbeat']):
-            reply = self.process_heartbeat(address)
+            reply = self.process_heartbeat(address, message[1:])
         elif message[0].startswith(idTechCommon.headers['quake2']['shutdown']):
             reply = self.process_shutdown(address)
         elif message[0].startswith(idTechCommon.headers['quake2']['ping']):

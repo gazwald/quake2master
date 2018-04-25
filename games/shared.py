@@ -2,9 +2,18 @@ import ipaddress
 import struct
 import logging
 
+import GeoIP
+
 from sqlalchemy import and_
 
-from database.orm import Server
+from database.orm import (Server,
+                          Status,
+                          Version,
+                          Map,
+                          Country,
+                          Gamename)
+
+from database.functions import get_or_create
 
 
 class idTechCommon():
@@ -54,6 +63,7 @@ class Master(idTechCommon):
     common among idtech servers
     """
     def __init__(self, session):
+        self.gi = GeoIP.new(GeoIP.GEOIP_MEMORY_CACHE)
         self.session = session
         self.game = None
 
@@ -68,6 +78,46 @@ class Master(idTechCommon):
         port = data[1]
         return struct.pack('!LH', int(ip_address), port)
 
+    @classmethod
+    def dictify(cls, data):
+        """
+        Input:
+            b'\\cheats\\0\\deathmatch\\1\\dmflags\\16\\fraglimit\\0'
+        Split the above byte-string into list of strings resulting in:
+            ['cheats', '0', 'deathmatch', '1', 'dmflags', '16', 'fraglimit', '0']
+        If the number of keys/values isn't equal truncate the last value
+        Zip the above list of strings and then convert zip object into a dict:
+            {'cheats': 0, 'deathmatch': 1, 'dmflags': 16, 'fraglimit': 0]
+        For each key/value try to convert it to an int ahead of time.
+
+        At the end of the heartbeat is the player list split by \n
+        Example: <score> <ping> <player>\n
+
+        """
+        status = dict()
+
+        if data[2:]:
+            status['clients'] = len(data[2:])
+
+        if data[1]:
+            str_status = data[1].decode('ascii')
+            list_status = str_status.split('\\')[1:]
+            if len(list_status) % 2 != 0:
+                list_status = list_status[:-1]
+
+            zip_status = zip(list_status[0::2], list_status[1::2])
+
+            for status_k, status_v in zip_status:
+                if len(status_v) > 128:
+                    status_v = status_v[:128]
+
+                try:
+                    status[status_k] = int(status_v)
+                except ValueError:
+                    status[status_k] = status_v
+
+        return status
+
     def get_server(self, address):
         """
         Helper function - simply returns a server based on
@@ -78,12 +128,38 @@ class Master(idTechCommon):
                                       port=address[1],
                                       game=self.game).first()
 
-    def process_heartbeat(self, address):
+    def update_status(self, server, status_dict):
         """
-        Processes a server heartbeat (not complete)
-        Almost all data sent by a server heartbeat is
-        currently discarded in favour of gathering it
-        elsewhere
+        Set all attributes from heartbeat such as map name, version, etc
+        """
+        status_dict['server'] = server
+        status_dict['version'] = get_or_create(self.session,
+                                               Version,
+                                               name=status_dict.get('version'))
+
+        status_dict['mapname'] = get_or_create(self.session,
+                                               Map,
+                                               name=status_dict.get('mapname'))
+
+        status_dict['gamename'] = get_or_create(self.session,
+                                                Gamename,
+                                                name=status_dict.get('gamedir', 'baseq2'))
+
+        status = self.session.query(Status)\
+                             .join(Status.server)\
+                             .filter(Status.server == server).first()
+
+        if status:
+            for status_k, status_v in status_dict:
+                setattr(status, status_k, status_v)
+        else:
+            status = Status(**status_dict)
+
+        self.session.add(status)
+
+    def process_heartbeat(self, address, message):
+        """
+        Processes a server heartbeat
         """
         logging.info(f"Heartbeat from {address[0]}:{address[1]}")
         server = self.get_server(address)
@@ -92,9 +168,18 @@ class Master(idTechCommon):
                 active=True,
                 ip=address[0],
                 port=address[1],
-                game=self.game
+                game=self.game,
+                country=get_or_create(self.session,
+                                      Country,
+                                      name_short=self.gi.country_code_by_addr(address[0]),
+                                      name_long=self.gi.country_name_by_addr(address[0]))
             )
-            self.session.add(server)
+        else:
+            server.active = True
+
+        self.session.add(server)
+
+        self.update_status(server, self.dictify(message))
 
         return None
 
