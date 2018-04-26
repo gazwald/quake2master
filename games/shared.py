@@ -18,12 +18,10 @@ from database.functions import get_or_create
 
 class idTechCommon():
     """
-    Parent class, intended for functions that will be
-    common among idtech games
+    Parent class, intended for functions that will be common among idtech game
     """
 
     common = b'\xff\xff\xff\xff'
-    # Master specific
     headers = dict(
         quake2=dict(
             ack=b''.join([common, b'ack']),
@@ -99,8 +97,7 @@ class idTechCommon():
 
 class Master(idTechCommon):
     """
-    Parent class, intended for functions that will be
-    common among idtech masters
+    Parent class, intended for functions that will be common among idtech masters
     """
     def __init__(self, session=None):
         self.session = session
@@ -109,30 +106,54 @@ class Master(idTechCommon):
 
     def get_server(self, address):
         """
-        Helper function - simply returns a server based on
-        adress:port if it is known
+        Helper function - returns a server based on adress:port
         """
         return self.session.query(Server)\
                            .filter_by(ip=address[0],
                                       port=address[1],
                                       game=self.game).first()
 
+    def get_version(self, version):
+        """
+        Helper function - gets or creates a Version entry and returns
+        """
+        return get_or_create(self.session,
+                             Version,
+                             name=version)
+
+    def get_mapname(self, mapname):
+        """
+        Helper function - gets or creates a Mapname entry and returns
+        """
+        return get_or_create(self.session,
+                             Map,
+                             name=mapname)
+
+    def get_gamename(self, gamename):
+        """
+        Helper function - gets or creates a Gamename entry and returns
+        """
+        return get_or_create(self.session,
+                             Gamename,
+                             name=gamename)
+
+    def get_country(self, address):
+        """
+        Helper function - gets or creates a Country entry and returns
+        """
+        return get_or_create(self.session,
+                             Country,
+                             name_short=self.gi.country_code_by_addr(address[0]),
+                             name_long=self.gi.country_name_by_addr(address[0]))
+
     def update_status(self, server, status_dict):
         """
         Set all attributes from heartbeat such as map name, version, etc
         """
         status_dict['server'] = server
-        status_dict['version'] = get_or_create(self.session,
-                                               Version,
-                                               name=status_dict.get('version'))
-
-        status_dict['mapname'] = get_or_create(self.session,
-                                               Map,
-                                               name=status_dict.get('mapname'))
-
-        status_dict['gamename'] = get_or_create(self.session,
-                                                Gamename,
-                                                name=status_dict.get('gamedir', 'baseq2'))
+        status_dict['version'] = self.get_version(status_dict.get('version'))
+        status_dict['mapname'] = self.get_mapname(status_dict.get('mapname'))
+        status_dict['gamename'] = self.get_gamename(status_dict.get('gamename'))
 
         status = self.session.query(Status)\
                              .join(Status.server)\
@@ -158,10 +179,7 @@ class Master(idTechCommon):
                 ip=address[0],
                 port=address[1],
                 game=self.game,
-                country=get_or_create(self.session,
-                                      Country,
-                                      name_short=self.gi.country_code_by_addr(address[0]),
-                                      name_long=self.gi.country_name_by_addr(address[0]))
+                country=self.get_country(address)
             )
         else:
             server.active = True
