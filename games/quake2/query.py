@@ -5,10 +5,6 @@ import logging
 from datetime import datetime
 
 from database.orm import (Server,
-                          Status,
-                          Map,
-                          Version,
-                          Gamename,
                           Player,
                           State,
                           Country)
@@ -54,56 +50,6 @@ class Quake2Query():
         logging.info(f"Marking {server.ip}:{server.port} inactive")
         server.active = False
         self.session.add(server)
-
-    def dictify(message):
-        """
-        Input:
-            b'\\cheats\\0\\deathmatch\\1\\dmflags\\16\\fraglimit\\0'
-        Split the above byte-string into list of strings resulting in:
-            ['cheats', '0', 'deathmatch', '1', 'dmflags', '16', 'fraglimit', '0']
-        Zip the above list of byte strings and then convert zip object into a dict:
-            {'cheats': '0', 'deathmatch': '1', 'dmflags': '16', 'fraglimit': '0']
-        For each key/value try to convert it to an int ahead of time.
-        TODO: Look for improvements here
-        """
-        strmessage = message.decode('ascii')
-        strstatus = strmessage.split('\\')[1:]
-        zipped = zip(strstatus[0::2], strstatus[1::2])
-        status = dict((x, y) for x, y in zipped)
-
-        for k, v in status.items():
-            try:
-                status[k] = int(v)
-            except ValueError:
-                pass
-
-        return status
-
-    def update_status(self, server, serverstatus):
-        serverstatus['server'] = server
-        serverstatus['version'] = get_or_create(self.session,
-                                                Version,
-                                                name=serverstatus.get('version'))
-
-        serverstatus['mapname'] = get_or_create(self.session,
-                                                Map,
-                                                name=serverstatus.get('mapname'))
-
-        serverstatus['gamename'] = get_or_create(self.session,
-                                                 Gamename,
-                                                 name=serverstatus.get('gamedir', 'baseq2'))
-
-        serverstatus['clients'] = self.session.query(Player).join(Player.server).filter(Player.server == server).count()
-
-        status = self.session.query(Status).join(Status.server).filter(Status.server == server).first()
-
-        if status:
-            for k, v in serverstatus:
-                setattr(status, k, v)
-        else:
-            status = Status(**serverstatus)
-
-        self.session.add(status)
 
     def update_players(self, server, players):
         """
