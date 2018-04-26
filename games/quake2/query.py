@@ -1,24 +1,18 @@
 import socket
-import GeoIP
 import re
 import logging
 from datetime import datetime
 
 from database.orm import (Server,
                           Player,
-                          State,
-                          Country)
+                          State)
 
-from database.functions import get_or_create
-
-from games import Headers
+from games import idTechCommon
 
 
-class Quake2Query():
-    def __init__(self, session):
-        self.gi = GeoIP.new(GeoIP.GEOIP_MEMORY_CACHE)
-
-        self.session = session
+class Quake2Query(idTechCommon):
+    def __init__(self):
+        super().__init__()
         self.update_state()
 
     def update_state(self):
@@ -39,10 +33,7 @@ class Quake2Query():
 
     def update_active_server(self, server):
         logging.info(f"Marking {server.ip}:{server.port} active")
-        server.country = get_or_create(self.session,
-                                       Country,
-                                       name_short=self.gi.country_code_by_addr(server.ip),
-                                       name_long=self.gi.country_name_by_addr(server.ip))
+        server.country = self.get_country(server.ip)
         server.active = True
         self.session.add(server)
 
@@ -73,7 +64,7 @@ class Quake2Query():
 
     def process_server_info(self, server, data):
         message = data.split(b'\n')
-        if message[0].startswith(Headers.q2header_print):
+        if message[0].startswith(idTechCommon['quake2']['print']):
             logging.info(f"Updating server info for {server}")
             status = message[1]
             players = message[2:]
@@ -91,7 +82,7 @@ class Quake2Query():
                 try:
                     logging.info(f"Connecting to {server}...")
                     s.connect((server.ip, server.port))
-                    s.send(Headers.q2header_query)
+                    s.send(idTechCommon['quake2']['query'])
                     data = s.recv(1024)
                 except socket.error as err:
                     logging.debug(f"Connection error: {err}")

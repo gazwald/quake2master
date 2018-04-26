@@ -35,6 +35,10 @@ class idTechCommon():
         )
     )
 
+    def __init__(self, session=None):
+        super().__init__()
+        self.session = session
+
     @classmethod
     def bytepack(cls, data):
         """
@@ -94,16 +98,6 @@ class idTechCommon():
         command = data[:13]
         return any(v for v in idTechCommon.headers['quake2'].values() if v.startswith(command))
 
-
-class Master(idTechCommon):
-    """
-    Parent class, intended for functions that will be common among idtech masters
-    """
-    def __init__(self, session=None):
-        self.session = session
-        self.gi = GeoIP.new(GeoIP.GEOIP_MEMORY_CACHE)
-        self.game = None
-
     def get_server(self, address):
         """
         Helper function - returns a server based on adress:port
@@ -115,7 +109,7 @@ class Master(idTechCommon):
 
     def get_version(self, version):
         """
-        Helper function - gets or creates a Version entry and returns
+        Helper function - gets or creates a Version object and returns
         """
         return get_or_create(self.session,
                              Version,
@@ -123,7 +117,7 @@ class Master(idTechCommon):
 
     def get_mapname(self, mapname):
         """
-        Helper function - gets or creates a Mapname entry and returns
+        Helper function - gets or creates a Mapname object and returns
         """
         return get_or_create(self.session,
                              Map,
@@ -131,7 +125,7 @@ class Master(idTechCommon):
 
     def get_gamename(self, gamename):
         """
-        Helper function - gets or creates a Gamename entry and returns
+        Helper function - gets or creates a Gamename object and returns
         """
         return get_or_create(self.session,
                              Gamename,
@@ -139,7 +133,7 @@ class Master(idTechCommon):
 
     def get_country(self, address):
         """
-        Helper function - gets or creates a Country entry and returns
+        Helper function - gets or creates a Country object and returns
         """
         return get_or_create(self.session,
                              Country,
@@ -149,6 +143,8 @@ class Master(idTechCommon):
     def update_status(self, server, status_dict):
         """
         Set all attributes from heartbeat such as map name, version, etc
+        status_dict should be the output of dictify, which should have been
+        passed the whole message split at \n
         """
         status_dict['server'] = server
         status_dict['version'] = self.get_version(status_dict.get('version'))
@@ -166,6 +162,16 @@ class Master(idTechCommon):
             status = Status(**status_dict)
 
         self.session.add(status)
+
+
+class Master(idTechCommon):
+    """
+    Parent class, intended for functions that will be common among idtech masters
+    """
+    def __init__(self):
+        super().__init__()
+        self.gi = GeoIP.new(GeoIP.GEOIP_MEMORY_CACHE)
+        self.game = None
 
     def process_heartbeat(self, address, message):
         """
