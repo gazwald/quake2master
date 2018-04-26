@@ -72,6 +72,7 @@ class idTechCommon():
             status['clients'] = len(data[2:])
 
         if data[1]:
+            print(data)
             str_status = data[1].decode('ascii')
             list_status = str_status.split('\\')[1:]
             if len(list_status) % 2 != 0:

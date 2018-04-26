@@ -4,7 +4,7 @@ from games.shared import idTechCommon
 
 
 class TestidTechCommon(TestCase):
-    def test_master_bytepack(self):
+    def test_common_bytepack(self):
         result = idTechCommon.bytepack(('127.0.0.1', 27910))
         self.assertEqual(len(result), 6)
         self.assertEqual(result, b'\x7f\x00\x00\x01m\x06')
@@ -15,7 +15,7 @@ class TestidTechCommon(TestCase):
         self.assertEqual(len(result), 6)
         self.assertEqual(result, b'\xfe\xfe\xfe\xfe\xff\xff')
 
-    def test_master_is_q2(self):
+    def test_common_is_q2(self):
         self.assertTrue(idTechCommon.is_q2(b'\xff\xff\xff\xffping'))
         self.assertTrue(idTechCommon.is_q2(b'\xff\xff\xff\xffheartbeat'))
         self.assertTrue(idTechCommon.is_q2(b'\xff\xff\xff\xffshutdown'))
@@ -25,3 +25,17 @@ class TestidTechCommon(TestCase):
         # However b'\xff\xff\xff\xff' isn't only used for quake 2
         # self.assertFalse(idTechCommon.is_q2(b'\xff\xff\xff\xff'))
         self.assertFalse(idTechCommon.is_q2(b'\xff\xff\xff\xffgarbage'))
+
+    def test_common_dictify(self):
+        raw_byte_string = [b'\xff\xff\xff\xffheartbeat',
+                           b'\\cheats\\0\\deathmatch\\1\\dmflags\\16\\hostname\\Hello\\',
+                           b'1 12 Player 1',
+                           b'2 24 Player 2',
+                           b'100 48 Player 3']
+        expected = dict(cheats=0,
+                        deathmatch=1,
+                        dmflags=16,
+                        hostname='Hello',
+                        clients=3)
+        result = idTechCommon.dictify(raw_byte_string)
+        self.assertEqual(result, expected)
