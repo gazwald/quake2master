@@ -8,7 +8,7 @@ from games import Quake2Master
 
 class TestQuake2Master(TestCase):
     def setUp(self):
-        self.q2 = Quake2Master(None)
+        self.q2 = Quake2Master()
 
     def tearDown(self):
         del self.q2

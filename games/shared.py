@@ -19,7 +19,7 @@ from database.functions import get_or_create
 class idTechCommon():
     """
     Parent class, intended for functions that will be
-    common among idtech servers
+    common among idtech games
     """
 
     common = b'\xff\xff\xff\xff'
@@ -36,36 +36,6 @@ class idTechCommon():
             server_print=b''.join([common, b'print'])
         )
     )
-
-    @classmethod
-    def bytepack(cls, data):
-        """
-        Pack an IP (4 bytes) and Port (2 bytes) together
-        IP addresses are stored as INET in Postgres
-        Ports are stored as Integers in Postgres
-        """
-        ip_address = ipaddress.IPv4Address(data[0])
-        port = data[1]
-        return struct.pack('!LH', int(ip_address), port)
-
-    @classmethod
-    def is_q2(cls, data):
-        """
-        Determines if a specific request is a Quake 2 server or client
-        """
-        command = data[:13]
-        return any(v for v in idTechCommon.headers['quake2'].values() if v.startswith(command))
-
-
-class Master(idTechCommon):
-    """
-    Parent class, intended for functions that will be
-    common among idtech servers
-    """
-    def __init__(self, session):
-        self.gi = GeoIP.new(GeoIP.GEOIP_MEMORY_CACHE)
-        self.session = session
-        self.game = None
 
     @classmethod
     def bytepack(cls, data):
@@ -117,6 +87,25 @@ class Master(idTechCommon):
                     status[status_k] = status_v
 
         return status
+
+    @classmethod
+    def is_q2(cls, data):
+        """
+        Determines if a specific request is a Quake 2 server or client
+        """
+        command = data[:13]
+        return any(v for v in idTechCommon.headers['quake2'].values() if v.startswith(command))
+
+
+class Master(idTechCommon):
+    """
+    Parent class, intended for functions that will be
+    common among idtech masters
+    """
+    def __init__(self, session=None):
+        self.session = session
+        self.gi = GeoIP.new(GeoIP.GEOIP_MEMORY_CACHE)
+        self.game = None
 
     def get_server(self, address):
         """
