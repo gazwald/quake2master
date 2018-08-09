@@ -35,10 +35,6 @@ class idTechCommon():
         )
     )
 
-    def __init__(self, session=None):
-        super().__init__()
-        self.session = session
-
     @classmethod
     def bytepack(cls, data):
         """
@@ -68,11 +64,11 @@ class idTechCommon():
         """
         status = dict()
 
-        if data[2:]:
+        if data[1:]:
             status['clients'] = len(data[2:])
 
-        if data[1]:
-            str_status = data[1].decode('ascii')
+        if data[0]:
+            str_status = data[0].decode('ascii')
             list_status = str_status.split('\\')[1:]
             if len(list_status) % 2 != 0:
                 list_status = list_status[:-1]
@@ -148,7 +144,7 @@ class idTechCommon():
         """
         status_dict['server'] = server
         status_dict['version'] = self.get_version(status_dict.get('version'))
-        status_dict['mapname'] = self.get_mapname(status_dict.get('mapname'))
+        status_dict['map'] = self.get_mapname(status_dict.get('mapname'))
         status_dict['gamename'] = self.get_gamename(status_dict.get('gamename'))
 
         status = self.session.query(Status)\
@@ -156,7 +152,7 @@ class idTechCommon():
                              .filter(Status.server == server).first()
 
         if status:
-            for status_k, status_v in status_dict:
+            for status_k, status_v in status_dict.items():
                 setattr(status, status_k, status_v)
         else:
             status = Status(**status_dict)
@@ -171,7 +167,6 @@ class Master(idTechCommon):
     def __init__(self):
         super().__init__()
         self.gi = GeoIP.new(GeoIP.GEOIP_MEMORY_CACHE)
-        self.game = None
 
     def process_heartbeat(self, address, message):
         """
@@ -217,7 +212,7 @@ class Master(idTechCommon):
         if server:
             server.active = True
 
-        return idTechCommon.headers[self.game]['ack']
+        return idTechCommon.headers[self.game.name]['ack']
 
     def process_query(self, address):
         """
@@ -226,7 +221,7 @@ class Master(idTechCommon):
         """
         logging.info(f"Sending servers to {address[0]}:{address[1]}")
         if self.game.name == 'quake2':
-            serverstring = [idTechCommon.headers[self.game]['servers']]
+            serverstring = [idTechCommon.headers[self.game.name]['servers']]
         else:
             serverstring = []
 

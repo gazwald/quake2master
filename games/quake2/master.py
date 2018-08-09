@@ -10,12 +10,10 @@ class Quake2Master(Master):
     """
     Functions specific to responding to Quake 2 Servers and Clients
     """
-    def __init__(self):
+    def __init__(self, session=None):
         super().__init__()
-        if self.session:
-            self.game = get_or_create(self.session, Game, name='quake2')
-        else:
-            self.game = 'quake2'
+        self.session = session
+        self.game = get_or_create(self.session, Game, name='quake2')
 
     def process_request(self, data, address):
         """
