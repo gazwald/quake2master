@@ -4,6 +4,8 @@ import signal
 import functools
 import logging
 import configparser
+import os
+import sys
 from sqlalchemy import exc
 
 from database.functions import (create_db_session,
@@ -46,9 +48,9 @@ def shutdown(sig):
 
 if __name__ == '__main__':
     config = configparser.ConfigParser()
-    config.read('config.ini')
+    config.read(os.path.join(os.path.dirname(os.path.realpath(sys.argv[0])), 'config.ini'))
 
-    logging.basicConfig(filename=config['logging'].get('log', 'master.log'),
+    logging.basicConfig(stream=sys.stdout,
                         level=getattr(logging, str.upper(config['logging'].get('level', 'INFO'))),
                         format='%(asctime)s %(levelname)s %(message)s',
                         datefmt='%Y-%m-%d %H:%M:%S')
