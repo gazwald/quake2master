@@ -46,14 +46,21 @@ def shutdown(sig):
     LOOP.stop()
 
 
-if __name__ == '__main__':
-    config = configparser.ConfigParser()
-    config.read(os.path.join(os.path.dirname(os.path.realpath(sys.argv[0])), 'config.ini'))
+def configure_logging():
+    config_log_level = config['logging'].get('level', 'INFO')
+    log_level = getattr(logging, config_log_level)
 
     logging.basicConfig(stream=sys.stdout,
-                        level=getattr(logging, str.upper(config['logging'].get('level', 'INFO'))),
+                        level=log_level,
                         format='%(asctime)s %(levelname)s %(message)s',
                         datefmt='%Y-%m-%d %H:%M:%S')
+
+
+if __name__ == '__main__':
+    config_path = os.path.dirname(os.path.realpath(sys.argv[0]))
+
+    config = configparser.ConfigParser()
+    config.read(os.path.join(config_path, 'config.ini'))
 
     logging.info(f"Starting master server")
 
