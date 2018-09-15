@@ -2,6 +2,7 @@ import socket
 import re
 import logging
 from datetime import datetime
+from multiprocessing import Pool
 
 from database.orm import (Server,
                           Player,
@@ -74,25 +75,27 @@ class Quake2Query(idTechCommon):
             if status:
                 self.update_status(server, self.dictify(status))
 
-    def query_servers(self):
-        # TODO: Replce with asyncio
+    def connect_to_server(self, server):
         with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
             s.settimeout(5)
-            for server in self.session.query(Server).filter(Server.active):
-                try:
-                    logging.info(f"Connecting to {server}...")
-                    s.connect((server.ip, server.port))
-                    s.send(idTechCommon['quake2']['query'])
-                    data = s.recv(1024)
-                except socket.error as err:
-                    logging.debug(f"Connection error: {err}")
-                    self.update_inactive_server(server)
-                    continue
-                else:
-                    self.update_active_server(server)
-                    self.process_server_info(server, data)
-                finally:
-                    self.session.commit()
+            try:
+                logging.info(f"Connecting to {server}...")
+                s.connect((server.ip, server.port))
+                s.send(idTechCommon['quake2']['query'])
+                data = s.recv(1024)
+            except socket.error as err:
+                logging.debug(f"Connection error: {err}")
+                self.update_inactive_server(server)
+            else:
+                self.update_active_server(server)
+                self.process_server_info(server, data)
+            finally:
+                self.session.commit()
+
+    def query_servers(self):
+        with Pool(10) as pool:
+            pool.map(self.connect_to_server,
+                     self.session.query(Server).filter(Server.active))
 
     def __exit__(self, exc_type, exc_value, traceback):
         self.shutdown()
