@@ -30,7 +30,8 @@ class Quake2Query(idTechCommon):
             self.query_servers()
         else:
             logging.info(f"Already running")
-            self.shutdown()
+
+        self.shutdown()
 
     def update_active_server(self, server):
         logging.info(f"Marking {server.ip}:{server.port} active")
