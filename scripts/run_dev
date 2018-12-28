@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+cd $(dirname $0)/..
+
+source scripts/environment
+
+scripts/build
+
+docker run --rm -it q2m:dev scl enable ${SCL_PACKAGE} bash

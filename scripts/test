@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+
+source scripts/environment
+
+scripts/bootstrap
+
+pip install -r requirements_ci.txt
+
+scripts/test_unit
+scripts/test_integration
+scripts/test_lint

@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+
+source scripts/environment
+
+scripts/bootstrap
+
+pip install -r requirements_ci.txt
+
+nose2 --plugin nose2.plugins.junitxml --junit-xml --with-coverage --start-dir tests/unit_tests/
+
+nose2 --plugin nose2.plugins.junitxml --junit-xml --start-dir tests/integration_tests
+
+pylint --generate-rcfile > pylint.cfg
+sed -i 's/output-format=text/output-format=parseable/g' pylint.cfg
+pylint --rcfile=pylint.cfg $(find {app.py,database,masters} -type f -name '*.py' -print) > pylint.log || exit 0

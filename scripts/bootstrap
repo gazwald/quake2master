@@ -1,0 +1,65 @@
+#!/usr/bin/env bash
+
+set -eo pipefail
+
+cd "$(dirname "$0")/.."
+
+source scripts/environment
+
+function install_system_deps {
+    if [ "$EUID" -ne 0 ]; then
+        assume='sudo'
+    else
+        assume=''
+    fi 
+
+    echo "Installing system packages, SCL, and ${SCL_PACKAGE}"
+    ${assume} yum install -y centos-release-scl
+    ${assume} yum-config-manager --enable centos-sclo-rh-testing
+    ${assume} yum makecache fast
+    ${assume} yum install -y ${SCL_PACKAGE}-python \
+                             ${SCL_PACKAGE}-python-pip \
+                             ${SCL_PACKAGE}-python-virtualenv \
+                             ${SCL_PACKAGE}-scldevel \
+                             gcc \
+                             geoip-devel \
+                             postgresql-devel
+}
+
+function create_virtualenv {
+    if ! test -d ${VENV}; then
+        echo 'Creating virtual environment'
+        virtualenv --python=python3 ${VENV}
+    else
+        echo "${VENV} already exists, skipping..."
+    fi
+}
+
+function setup_environment {
+    echo 'Installing python modules'
+    if test -f ${VENV}/bin/activate; then
+        source ${VENV}/bin/activate
+    fi
+    pip install --upgrade pip
+    pip install -r requirements.txt
+}
+
+if grep -q 'CentOS' /etc/redhat-release; then
+    echo 'Found CentOS Host'
+    install_system_deps;
+
+    if test -f /opt/rh/${SCL_PACKAGE}/enable; then
+        source /opt/rh/${SCL_PACKAGE}/enable
+        setup_environment;
+    else
+        exit 1;
+    fi
+elif grep -q 'Fedora' /etc/redhat-release; then
+    echo 'Found Fedora Host'
+    create_virtualenv;
+    setup_environment;
+else
+    echo "Unsupported"
+fi
+
+echo 'Done'

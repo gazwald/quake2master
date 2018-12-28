@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+
+source scripts/environment
+
+scripts/bootstrap
+
+if test -d ${VENV}; then
+    source ${VENV}/bin/activate
+fi
+
+git submodule update --init --recursive
+
+# Setup config here
+
+database/create.py

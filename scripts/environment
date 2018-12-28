@@ -1,0 +1,2 @@
+SCL_PACKAGE='rh-python36'
+VENV='venv'
