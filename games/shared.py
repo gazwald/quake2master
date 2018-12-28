@@ -146,6 +146,14 @@ class idTechCommon():
         status_dict['version'] = self.get_version(status_dict.get('version'))
         status_dict['map'] = self.get_mapname(status_dict.get('mapname'))
         status_dict['gamename'] = self.get_gamename(status_dict.get('gamename'))
+        try:
+            del status_dict['gamedate']
+        except KeyError:
+            pass
+        try:
+            del status_dict['mapname']
+        except KeyError:
+            pass
 
         status = self.session.query(Status)\
                              .join(Status.server)\
