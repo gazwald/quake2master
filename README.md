@@ -1,5 +1,7 @@
 # Overview
 
+[![Build status](https://badge.buildkite.com/c394aa3ab564cf49587c4e675b77310b1e2d48627d96f3fc5c.svg)](https://buildkite.com/quake-services/quake-master)
+
 This project originally started as a desire to scrape active Quake 2 master servers and provide both a REST API and a backwards compatible interface for programs like qstat.
 
 The only two remaining Quake 2 master servers that I am aware of;
