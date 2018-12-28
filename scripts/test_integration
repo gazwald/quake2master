@@ -6,9 +6,7 @@ cd "$(dirname "$0")/.."
 
 source scripts/environment
 
-scripts/bootstrap
-
-pip install -r requirements_ci.txt
+scripts/test_setup
 
 nose2 --plugin nose2.plugins.junitxml --junit-xml --with-coverage --start-dir tests/unit_tests/
 

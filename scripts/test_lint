@@ -6,13 +6,7 @@ cd "$(dirname "$0")/.."
 
 source scripts/environment
 
-scripts/bootstrap
-
-pip install -r requirements_ci.txt
-
-nose2 --plugin nose2.plugins.junitxml --junit-xml --with-coverage --start-dir tests/unit_tests/
-
-nose2 --plugin nose2.plugins.junitxml --junit-xml --start-dir tests/integration_tests
+scripts/test_setup
 
 pylint --generate-rcfile > pylint.cfg
 sed -i 's/output-format=text/output-format=parseable/g' pylint.cfg

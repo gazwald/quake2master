@@ -6,6 +6,6 @@ cd "$(dirname "$0")/.."
 
 source scripts/environment
 
-scripts/test_unit
-scripts/test_integration
-scripts/test_lint
+scripts/bootstrap
+
+pip install -r requirements_testing.txt
