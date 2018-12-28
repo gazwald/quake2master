@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+# Why no 'u'? PS1 issue with venv/bin/activate
 set -eo pipefail
 
 cd "$(dirname "$0")/.."
