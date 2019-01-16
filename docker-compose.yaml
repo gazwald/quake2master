@@ -1,0 +1,14 @@
+version: '2'
+services:
+  db:
+    image: postgres
+  app:
+    build: .
+    working_dir: /opt/master/
+    volumes:
+      - .:/opt/master/
+    depends_on:
+      - db
+    environment:
+      PGHOST: db
+      PGUSER: postgres

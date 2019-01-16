@@ -2,9 +2,8 @@ import ipaddress
 import struct
 import logging
 
-import GeoIP
-
 from sqlalchemy import and_
+import GeoIP
 
 from database.orm import (Server,
                           Status,

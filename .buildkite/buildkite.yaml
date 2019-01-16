@@ -1,0 +1,19 @@
+---
+- name: "Linting checks"
+  command: scripts/test_lint
+  plugins:
+    - docker-compose#v2.1.0:
+        run: app
+
+- name: "Unit tests"
+  command: scripts/test_unit
+  plugins:
+    - docker-compose#v2.1.0:
+        run: app
+
+- name: "Integration tests"
+  command: scripts/test_integration
+  plugins:
+    - docker-compose#v2.1.0:
+        run: app
+
