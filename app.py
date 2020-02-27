@@ -6,7 +6,6 @@ import os
 from protocols import Protocols
 from storage import Storage
 from transport import Transport
-from masterserver import MasterServer
 
 from aws_xray_sdk.core import xray_recorder
 from aws_xray_sdk.core import patch_all
@@ -38,8 +37,7 @@ def setup_logging(level='INFO'):
 def main():
     protocols = Protocols()
     storage = Storage()
-    master = MasterServer(storage, protocols)
-    transport = Transport(master)
+    transport = Transport(storage, procotols)
 
     try:
         transport.loop.run_forever()
