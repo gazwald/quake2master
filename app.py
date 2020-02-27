@@ -37,7 +37,7 @@ def setup_logging(level='INFO'):
 def main():
     protocols = Protocols()
     storage = Storage()
-    transport = Transport(storage, procotols)
+    transport = Transport(storage, protocols)
 
     try:
         transport.loop.run_forever()
